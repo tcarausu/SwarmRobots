@@ -10,7 +10,15 @@ public class WalkerAgent : Agent
     CharacterController controller;
     void Start () {
         controller = GetComponent<CharacterController>();
+    }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.name != "WalkerAgent")
+        {
+        //    Debug.Log("Collided with " + collision.gameObject.name);
+            AddReward(-0.01f);
+        }
     }
 
     public Transform Target;
@@ -18,11 +26,8 @@ public class WalkerAgent : Agent
     {
         this.transform.localPosition = new Vector3( 15.0f, 2.0f, 42.0f);
 
-
         // Move the target to a new spot
-        // Target.localPosition = new Vector3(Random.value * 8 - 4,
-        //                                    0.5f,
-        //                                    Random.value * 8 - 4);
+        Target.localPosition = new Vector3(Random.value * 34 - 17, Target.localPosition.y,Target.localPosition.z) ;
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -52,7 +57,7 @@ public class WalkerAgent : Agent
         }
         else
         {
-            SetReward(-0.0001f);
+            AddReward(-0.0001f);
         }
 
     }
