@@ -8,18 +8,19 @@ using Unity.MLAgents.Actuators;
 public class WalkerAgent : Agent
 {
     CharacterController controller;
-    void Start () {
+    void Start () 
+    {
         controller = GetComponent<CharacterController>();
     }
 
-    void OnCollisionEnter(Collision collision)
-    {
-        if(collision.gameObject.name != "WalkerAgent")
-        {
-        //    Debug.Log("Collided with " + collision.gameObject.name);
-            AddReward(-0.01f);
-        }
-    }
+    // void OnCollisionEnter(Collision collision)
+    // {
+    //     if(collision.gameObject.name != "WalkerAgent")
+    //     {
+    //     //    Debug.Log("Collided with " + collision.gameObject.name);
+    //         AddReward(-0.01f);
+    //     }
+    // }
 
     public Transform Target;
     public override void OnEpisodeBegin()
@@ -41,10 +42,14 @@ public class WalkerAgent : Agent
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         // Actions, size = 2
-        Vector3 controlSignal = Vector3.zero;
-        controlSignal.x = actionBuffers.ContinuousActions[0];
-        controlSignal.z = actionBuffers.ContinuousActions[1];
-        controller.Move(controlSignal * Time.deltaTime * playerSpeed);
+        Vector3 direction = Vector3.zero;
+        direction.x = actionBuffers.ContinuousActions[0];
+        direction.z = actionBuffers.ContinuousActions[1];
+        controller.Move(direction * Time.deltaTime * playerSpeed);
+        if (direction != Vector3.zero)
+        {
+            this.transform.forward = direction;
+        }
 
         // Rewards
         float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
@@ -57,7 +62,7 @@ public class WalkerAgent : Agent
         }
         else
         {
-            AddReward(-0.0001f);
+            SetReward(-0.0001f);
         }
 
     }
