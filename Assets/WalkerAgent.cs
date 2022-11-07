@@ -8,9 +8,17 @@ using Unity.MLAgents.Actuators;
 public class WalkerAgent : Agent
 {
     CharacterController controller;
+    private List<Checkpoint> clearedCheckpoints;
+
     void Start () 
     {
         controller = GetComponent<CharacterController>();
+        clearedCheckpoints = new List<Checkpoint>();
+    }
+
+    public void checkpoint(Checkpoint cp){
+        AddReward(0.2f);
+        clearedCheckpoints.Add(cp);
     }
 
     // void OnCollisionEnter(Collision collision)
@@ -25,17 +33,26 @@ public class WalkerAgent : Agent
     public Transform Target;
     public override void OnEpisodeBegin()
     {
-        this.transform.localPosition = new Vector3( 15.0f, 2.0f, 42.0f);
+        foreach(Checkpoint cp in clearedCheckpoints){
+            cp.SetActive(true);
+        }
+        clearedCheckpoints.Clear();
+
+        this.transform.localPosition = new Vector3( 15.0f, this.transform.localPosition.y, 42.0f);
 
         // Move the target to a new spot
-        Target.localPosition = new Vector3(Random.value * 34 - 17, Target.localPosition.y,Target.localPosition.z) ;
+        Target.localPosition = new Vector3(Random.value * 34 - 17, Target.localPosition.y, Target.localPosition.z) ;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
         // Target and Agent positions
-        sensor.AddObservation(Target.localPosition);
-        sensor.AddObservation(this.transform.localPosition);
+        sensor.AddObservation(Target.localPosition.x);
+        sensor.AddObservation(Target.localPosition.z);
+        sensor.AddObservation(this.transform.localPosition.x);
+        sensor.AddObservation(this.transform.localPosition.z);
+        // Agent direction (useful to understand ray perception)
+        //sensor.AddObservation(this.transform.rotation.eulerAngles.y);
     }
 
     public float playerSpeed = 10;
@@ -62,7 +79,7 @@ public class WalkerAgent : Agent
         }
         else
         {
-            SetReward(-0.0001f);
+            AddReward(-0.0001f);
         }
 
     }
