@@ -5,7 +5,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 
-public class WalkerAgent : Agent
+public class WalkerAgentMulti : Agent
 {
     CharacterController controller;
     private List<Checkpoint> clearedCheckpoints;
@@ -30,6 +30,7 @@ public class WalkerAgent : Agent
     //     }
     // }
 
+    public Transform SpawnArea;
     public Transform Target;
     public override void OnEpisodeBegin()
     {
@@ -37,9 +38,27 @@ public class WalkerAgent : Agent
             cp.SetActive(true);
         }
         clearedCheckpoints.Clear();
+        RndSpawn();
+    }
 
-        this.transform.localPosition = new Vector3( 15.0f, this.transform.localPosition.y, 42.0f);
+    public void RndSpawn(){
+        Vector3 spawnSize = SpawnArea.GetComponent<Renderer>().bounds.size;
+        Vector3 rndPosition = new Vector3( Random.value * spawnSize.x - spawnSize.x/2, 1, Random.value * spawnSize.z - spawnSize.z/2);
+        if(rndPosition.x > 0)
+            rndPosition.x -= 1;
+        else 
+            rndPosition.x += 1;
+        
+        if(rndPosition.z > 0)
+            rndPosition.z -= 1;
+        else 
+            rndPosition.z += 1;
 
+        this.transform.localPosition = rndPosition;
+        Debug.Log(rndPosition);
+    }
+
+    public void MoveTarget(){
         // Move the target to a new spot
         Target.localPosition = new Vector3(Random.value * 34 - 17, Target.localPosition.y, Target.localPosition.z) ;
     }
@@ -69,13 +88,21 @@ public class WalkerAgent : Agent
         }
 
         // Rewards
-        float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
+        float distanceToTarget = Vector3.Distance(this.transform.position, Target.position);
 
         // Reached target
         if (distanceToTarget < 1.42f)
         {
-            SetReward(1.0f);
-            EndEpisode();
+            Transform parent = this.transform.parent;
+            for(int i = 0; i < parent.childCount; i++)
+            {
+                GameObject Go = parent.GetChild(i).gameObject;
+                if (Go.TryGetComponent<WalkerAgentMulti>(out WalkerAgentMulti agentm)){
+                    agentm.SetReward(1.0f);
+                    agentm.EndEpisode();
+                }
+            }
+            MoveTarget();
         }
         else
         {
