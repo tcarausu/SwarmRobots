@@ -11,26 +11,45 @@ from mlagents_envs.environment import ActionTuple
 
 class NeuroAgent():
 
-    def __init__(self, env, input_size, action_size, n_layers, n_neurons):
+    def __init__(self, env, input_size, action_size,n_of_agents, hidden_layers, n_neurons):
         self.env = env
         self.input_size = input_size
         self.action_size = action_size
+        self.n_of_agents = n_of_agents
 
-        self.n_layers = n_layers
+        self.hidden_layers = hidden_layers
         self.n_neurons = n_neurons
 
-        self.model = NeuroModel(self.input_size, self.action_size, self.n_layers, self.n_neurons)
+        self.hidden_layers = hidden_layers
+        self.n_neurons = n_neurons
+
+        self.model = NeuroModel(self.input_size, self.action_size, self.hidden_layers, self.n_neurons)
         self.n_params = self.model.count_params()
 
         np.random.seed(42)
+
+    def weight_init(self):
+        ind = []
+
+        for i in range(len(self.model.weights)):
+            
+            current_w = self.model.weights[i] 
+            np_weight = np.random.randn(current_w.shape[0],current_w.shape[1] ) *  np.sqrt(2 / (current_w.shape[0] + current_w.shape[1]))
+            ind.append(list(map(list,np_weight))) 
+
+            if i != len(self.model.weights) - 1: #add bias only if it's not the last layer
+                ind.append(np.zeros(current_w.shape[1]))
+            
+        return ind
+
 
     def set_deap(self):
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
 
         toolbox = base.Toolbox()
-        toolbox.register("weight_init", np.random.randn)
-        toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.weight_init, self.n_params)
+        toolbox.register("weight_init", self.weight_init)
+        toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.weight_init, 1)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate)
@@ -41,36 +60,41 @@ class NeuroAgent():
         return toolbox
 
     def evaluate(self,individual):
-        model = NeuroModel(self.input_size, self.action_size,self.n_layers, self.n_neurons)
+        model = NeuroModel(self.input_size, self.action_size,self.hidden_layers, self.n_neurons)
         model.set_weights(individual)
 
         behavior_name = list(self.env.behavior_specs)[0]
         totals = list()
-        num_episodes = 5
+        num_episodes = 1
+        max_steps = 750
         totals = []
 
         for _ in range(num_episodes):
             self.env.reset()
             decision_steps, terminal_steps = self.env.get_steps(behavior_name)
-            agent = decision_steps.agent_id[0]
+            
             done = False 
-            episode_rewards = 0
+            episode_reward = 0
+            steps = 0
+            while not done and steps<max_steps:
+                steps += 1
+                for agent_id_terminated in terminal_steps:
+                    episode_reward += terminal_steps[agent_id_terminated].reward
+                for agent_id_decision in decision_steps:
+                    episode_reward += decision_steps[agent_id_decision].reward
 
-            while not done:
                 if len(decision_steps) >= 1:
                     action = ActionTuple()
-                    movement = model.forward(decision_steps[agent].obs[0])
+                    movement = model.forward(decision_steps.obs[1])
                     action.add_continuous(movement)
                     self.env.set_actions(behavior_name, action)
-                self.env.step()
-                decision_steps, terminal_steps = self.env.get_steps(behavior_name)
-                if agent in decision_steps: # The agent requested a decision
-                    episode_rewards += decision_steps[agent].reward
-                if agent in terminal_steps: # The agent terminated its episode
-                    episode_rewards += terminal_steps[agent].reward
+                    self.env.step()
+                    decision_steps, terminal_steps = self.env.get_steps(behavior_name)
+                
+                else:
                     done = True
-            totals.append(episode_rewards)
-        return (np.sum(totals)/num_episodes,)
+            totals.append(episode_reward)
+        return (np.mean(totals),)
 
     def mateAndMutate(self,offspring, toolbox):
         CXPB, MUTPB = 0.2, 0.5
@@ -89,12 +113,12 @@ class NeuroAgent():
         fits = [ind.fitness.values for ind in pop]
         return fits, np.mean(fits)
 
-    def train(self):
+    def train(self,file):
 
         print("---PREPARING POPULATION---")
 
         toolbox = self.set_deap()
-        pop = toolbox.population(n=100) #create population
+        pop = toolbox.population(n=75) #create population
         fitnesses = list(map(toolbox.evaluate, pop)) #evaluation of each individual
         
         for ind, fit in zip(pop, fitnesses): #assign eval to each individual
@@ -124,48 +148,48 @@ class NeuroAgent():
                 print("Min %s" % min(fits))
                 print("Max %s" % max(fits))
                 print("Mean %s" % mean)
+                self.save_best(pop,file[0:5] + "epoch"+str(g)+".dat")  
 
             if mean > 0.6:
                 break
             print(time.time()-t)
 
-        self.save_best(pop)        
+        self.save_best(pop,file)        
            
-    def save_best(self,pop):
+    def save_best(self,pop,file):
         best_ind = sorted(pop, key=lambda ind: ind.fitness, reverse=True)[0] 
         print(best_ind)
-        np.savetxt("best.dat", np.array(best_ind))
+        np.savetxt(file, np.array(best_ind))
 
 
 class NeuroModel():
 
     def __init__(self, observation_size, action_size, n_layers, n_neurons):
 
-        self.weights = [np.zeros((observation_size, n_neurons))]
+        self.obs_size = observation_size
+        self.act_size = action_size
+        
+        self.weights = []
+        self.biases = []
+
+        self.initialize_weights(n_layers, n_neurons)
+        self.initialize_biases(n_layers, n_neurons)
+
+        self.act_fcn = np.tanh
+
+    def initialize_weights(self, n_layers, n_neurons):
+        self.weights.append(np.zeros((self.obs_size, n_neurons)))
 
         for _ in range(n_layers):
             self.weights.append(np.zeros((n_neurons, n_neurons)))
 
-        self.weights.append(np.zeros((n_neurons, action_size)))
+        self.weights.append(np.zeros((n_neurons, self.act_size)))
 
-        self.biases = [np.zeros(self.weights[0].shape[1])]
+    def initialize_biases(self, n_layers, n_neurons):
+        self.biases.append(np.zeros(self.weights[0].shape[1]))
 
         for _ in range(n_layers):
             self.biases.append(np.zeros(n_neurons))
-
-        # self.weights = [
-        #     np.zeros((observation_size, 100)),
-        #     np.zeros((100, 100)),
-        #     np.zeros((100, action_size))
-        # ]
-
-        # self.biases = [
-        #     np.zeros(self.weights[0].shape[1]),
-        #     np.zeros(self.weights[1].shape[1]),
-        #     np.zeros(self.weights[2].shape[1]),
-        # ]
-
-        self.act_fcn = lambda x: np.maximum(0,x)
 
     def count_params(self):
         sum = 0
@@ -176,8 +200,10 @@ class NeuroModel():
         return sum
 
     def forward(self, x):
-        mean = np.mean(x)
-        std = np.std(x)
+        batch = x.shape[0]
+
+        mean = np.mean(x, axis = 1).reshape(x.shape[0],1)
+        std = np.std(x, axis = 1).reshape(x.shape[0],1)
 
         x = (x-mean) / std
         for i in range(len(self.weights)):
@@ -185,18 +211,14 @@ class NeuroModel():
             if i != (len(self.weights) - 1):
                 x -= self.biases[i]
                 x = self.act_fcn(x)
-        x = x/10
-        return x.reshape(1,2)
+        return x.reshape(batch,self.act_size)
 
-    def set_weights(self, weights_list):
-        k=0
-        for w in self.weights:
-            for i in range(w.shape[0]):
-                for j in range(w.shape[1]):
-                    w[i][j] = weights_list[k]
-                    k+=1
-        for b in self.biases:
-            for i in range(b.shape[0]):
-                b[i] = weights_list[k]
-                k+=1
+    def set_weights(self, ind):
+        ind = ind[0]
+        weights = ind[0::2]
+        biases = ind[1::2]
+
+        self.weights = [np.array(w) for w in weights]
+        self.biases = [np.array(b) for b in biases]
+
     
