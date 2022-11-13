@@ -9,7 +9,6 @@ public class GoalCheckScript : MonoBehaviour
     {
         if (other.CompareTag("agent"))
         {
-            print("goal yes yes");
             other.gameObject.GetComponent<WalkerAgentMulti>().reachedGoal = true;
         }
     }
