@@ -11,7 +11,7 @@ public class Checkpoint : MonoBehaviour
             this.gameObject.SetActive(false);
         }
         else if (other.TryGetComponent<WalkerAgentMulti>(out WalkerAgentMulti agentm)){
-            agentm.checkpoint(this);
+            agentm.Checkpoint(this);
             this.gameObject.SetActive(false);
         }
     }
