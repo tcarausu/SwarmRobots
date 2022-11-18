@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class SpawnCheck : MonoBehaviour
 {
+    
     private List<Transform> Agents;
     // Start is called before the first frame update
     void Start()
     {
+        
         Agents = new List<Transform>();
         for (int i = 0; i < transform.childCount; i++)
         {
@@ -20,16 +22,21 @@ public class SpawnCheck : MonoBehaviour
         }
     }
 
+    // private readonly float sqrt2 = Mathf.Sqrt(3);
     // Returns true if pos can be used as a spawn position for a new agent with edge size length
-    public bool isSafePosition(Vector3 pos, float length){
-        foreach(var agent in Agents)
+    public bool IsSafePosition(Vector3 pos, float length){
+        //float maxDistance = length * sqrt2; // Conidering diagonal of the cube
+        foreach (var agent in Agents)
         {
+           
             Vector3 agentPos = agent.localPosition;
-            if (Mathf.Abs(agentPos.x - pos.x) < length && 
+            //Debug.Log(transform.parent.name + " --> " + agent.name);
+            //Debug.Log(agentPos + " , " + pos);
+            //Debug.Log(Vector3.Distance(agentPos, pos));
+            if (Mathf.Abs(agentPos.x - pos.x) < length ||
                 Mathf.Abs(agentPos.z - pos.z) < length)
-            {
                 return false;
-            }
+
         }
         return true;
     }

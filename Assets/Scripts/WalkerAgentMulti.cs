@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
@@ -8,16 +7,26 @@ using Random = UnityEngine.Random;
 
 public class WalkerAgentMulti : Agent
 {
-    public Transform Swarm;
-    public Transform Target;
+    public float playerSpeed = 10;
+    public float existenctialPenalty = 0.001f;
+    public float nearAgentPenalty = 0.1f; //Not implemented yet
+    public float hitWallPenalty = 0.05f;
+    public float hitAgentPenalty = 0.03f;
 
-    private Transform SpawnArea;
-    private SpawnCheck spawnCheck;
-    CharacterController controller;
+    public float checkpointReward = 0.15f;
+    public float targetReward = 1;
+
+    private Transform Swarm;
+    private Transform Target;
+    private SpawnAreas TargetSpawnAreas;
+
+    private CharacterController controller;
+
     private List<Checkpoint> clearedCheckpoints;
 
+    private Transform MySpawnArea;
+    private SpawnCheck spawnCheck;
     private Vector3 initialPosition;
-    private Rigidbody rb;
     private Vector3 spawnSize;
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
 
@@ -26,30 +35,38 @@ public class WalkerAgentMulti : Agent
         controller = GetComponent<CharacterController>();
         clearedCheckpoints = new List<Checkpoint>();
 
+        Swarm = transform.parent;
         spawnCheck = Swarm.gameObject.GetComponent<SpawnCheck>();
-        SpawnArea = Swarm.Find("SpawnArea");
+        MySpawnArea = Swarm.Find("SpawnArea");
         initialPosition = transform.localPosition;
-        rb = GetComponent<Rigidbody>();
-        spawnSize = SpawnArea.GetComponent<Renderer>().bounds.size;
+        spawnSize = MySpawnArea.GetComponent<Renderer>().bounds.size;
         length = GetComponent<BoxCollider>().size.x;
-        spawnSize.x = spawnSize.x - length/2;
-        spawnSize.z = spawnSize.z - length/2;
+        spawnSize.x -= length/2;
+        spawnSize.z -= length/2;
+
+        Transform Goal = Swarm.parent.Find("GOAL");
+        GameObject go = Goal.Find("SpawnAreas").gameObject;
+        TargetSpawnAreas = go.GetComponent<SpawnAreas>();
+        Target = Goal.Find("Target");
+
     }
 
-    public void checkpoint(Checkpoint cp)
+    public void Checkpoint(Checkpoint cp)
     {
-        AddReward(0.2f);
+        AddReward(checkpointReward);
         clearedCheckpoints.Add(cp);
     }
 
-    // void OnCollisionEnter(Collision collision)
-    // {
-    //     if(collision.gameObject.name != "WalkerAgent")
-    //     {
-    //     //    Debug.Log("Collided with " + collision.gameObject.name);
-    //         AddReward(-0.01f);
-    //     }
-    // }
+    void OnCollisionEnter(Collision collision)
+    {
+        GameObject go = collision.gameObject;
+
+        if (go.CompareTag("wall"))
+            AddReward(-hitWallPenalty);
+        // Hit with another agent
+        else if (go.CompareTag("agent") && !go.Equals(gameObject))         
+            AddReward(-hitAgentPenalty);
+    }
 
 
     public override void OnEpisodeBegin()
@@ -73,7 +90,7 @@ public class WalkerAgentMulti : Agent
             initialPosition.y,
             Random.value * spawnSize.z - spawnSize.z / 2);
         } 
-        while (!spawnCheck.isSafePosition(rndPosition, length));
+        while (!spawnCheck.IsSafePosition(rndPosition, length));
         
         transform.localPosition = rndPosition;
         
@@ -82,23 +99,27 @@ public class WalkerAgentMulti : Agent
     private void MoveTarget()
     {
         // Move the target to a new spot
-        Target.localPosition = new Vector3(Random.value * 34 - 17, Target.localPosition.y, Target.localPosition.z);
+        Target.localPosition = TargetSpawnAreas.GetRndPosition();
         reachedGoal = false;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        //The only observation is the raycast 
+
+        //TODO: add the position of close agents
+
         // Target and Agent positions
-        sensor.AddObservation(Target.localPosition.x);
-        sensor.AddObservation(Target.localPosition.z);
-        sensor.AddObservation(transform.localPosition.x);
-        sensor.AddObservation(transform.localPosition.z);
+        //sensor.AddObservation(Target.localPosition.x);
+        //sensor.AddObservation(Target.localPosition.z);
+        //sensor.AddObservation(transform.localPosition.x);
+        //sensor.AddObservation(transform.localPosition.z);
         // Agent direction (useful to understand ray perception)
         //sensor.AddObservation(this.transform.rotation.eulerAngles.y);
     }
 
-    public float playerSpeed = 10;
-    public bool reachedGoal;
+    private bool reachedGoal;
+    public void ReachGoal() { reachedGoal = true;}
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -107,7 +128,7 @@ public class WalkerAgentMulti : Agent
         direction.x = actionBuffers.ContinuousActions[0];
         direction.z = actionBuffers.ContinuousActions[1];
 
-        controller.Move(direction * Time.deltaTime * playerSpeed);
+        controller.Move(playerSpeed * Time.deltaTime * direction);
         if (direction != Vector3.zero)
         {
             transform.forward = direction;
@@ -118,24 +139,17 @@ public class WalkerAgentMulti : Agent
         // Reached target
         if (reachedGoal)
         {
-            
-            for (int i = 0; i < Swarm.childCount; i++)
+            WalkerAgentMulti[] agents = Swarm.GetComponentsInChildren<WalkerAgentMulti>();
+            foreach(WalkerAgentMulti agent in agents)
             {
-                GameObject Go = Swarm.GetChild(i).gameObject;
-                if (Go.TryGetComponent(out WalkerAgentMulti agentm))
-                {
-                    agentm.SetReward(1.0f);
-                    agentm.EndEpisode();
-                }
+                agent.SetReward(targetReward);
+                agent.EndEpisode();
             }
 
             MoveTarget();
         }
         else
-        {
-            AddReward(-0.0001f);
-        }
-
+            AddReward(-existenctialPenalty);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
