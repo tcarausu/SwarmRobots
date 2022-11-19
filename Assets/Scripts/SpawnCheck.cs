@@ -22,21 +22,16 @@ public class SpawnCheck : MonoBehaviour
         }
     }
 
-    // private readonly float sqrt2 = Mathf.Sqrt(3);
+
     // Returns true if pos can be used as a spawn position for a new agent with edge size length
     public bool IsSafePosition(Vector3 pos, float length){
-        //float maxDistance = length * sqrt2; // Conidering diagonal of the cube
+
         foreach (var agent in Agents)
         {
-           
             Vector3 agentPos = agent.localPosition;
-            //Debug.Log(transform.parent.name + " --> " + agent.name);
-            //Debug.Log(agentPos + " , " + pos);
-            //Debug.Log(Vector3.Distance(agentPos, pos));
             if (Mathf.Abs(agentPos.x - pos.x) < length ||
                 Mathf.Abs(agentPos.z - pos.z) < length)
                 return false;
-
         }
         return true;
     }

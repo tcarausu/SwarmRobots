@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -8,8 +9,12 @@ using Random = UnityEngine.Random;
 public class WalkerAgentMulti : Agent
 {
     public float playerSpeed = 10;
+    private bool useCommunication; // Retreived from the training area, remember to set the observation size correctly in the prefab
+
     public float existenctialPenalty = 0.001f;
-    public float nearAgentPenalty = 0.1f; //Not implemented yet
+    [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
+    [Header("Inversely proportional to distance")]
+    public float nearAgentPenalty = 0.1f;
     public float hitWallPenalty = 0.05f;
     public float hitAgentPenalty = 0.03f;
 
@@ -17,6 +22,7 @@ public class WalkerAgentMulti : Agent
     public float targetReward = 1;
 
     private Transform Swarm;
+    private List<WalkerAgentMulti> otherAgents;
     private Transform Target;
     private SpawnAreas TargetSpawnAreas;
 
@@ -49,6 +55,21 @@ public class WalkerAgentMulti : Agent
         TargetSpawnAreas = go.GetComponent<SpawnAreas>();
         Target = Goal.Find("Target");
 
+        useCommunication = Swarm.parent.GetComponent<CommonParameters>().useCommunication;
+
+        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
+        otherAgents.Remove(this);
+
+        // Compute observation size based on the useCommunication parameter
+        int obsSize = 0;
+        if (useCommunication)
+            obsSize = otherAgents.Count;
+
+        // Since I can't set the size from here I just notify the user
+        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
+            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
+            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
+            "\nRemember you have Communication set to " + useCommunication);
     }
 
     public void Checkpoint(Checkpoint cp)
@@ -105,9 +126,26 @@ public class WalkerAgentMulti : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        //The only observation is the raycast 
-
-        //TODO: add the position of close agents
+        //The only observation is the raycast if communication is used
+        if (!useCommunication)
+            return;
+        
+        // If the agents are on sigth add the distance to each other as an observation, otherwise 0
+        Vector3 dir;
+        foreach (Agent agent in otherAgents)
+        {
+            dir = (agent.transform.position - transform.position).normalized;
+            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
+            {
+                if (hit.collider.CompareTag("agent"))
+                {
+                    sensor.AddObservation(hit.distance);
+                    AddReward(-(1/hit.distance)*nearAgentPenalty);
+                }
+                else
+                    sensor.AddObservation(0);
+            }
+        }
 
         // Target and Agent positions
         //sensor.AddObservation(Target.localPosition.x);
@@ -134,13 +172,11 @@ public class WalkerAgentMulti : Agent
             transform.forward = direction;
         }
 
-        // Rewards
-
-        // Reached target
         if (reachedGoal)
         {
-            WalkerAgentMulti[] agents = Swarm.GetComponentsInChildren<WalkerAgentMulti>();
-            foreach(WalkerAgentMulti agent in agents)
+            SetReward(targetReward);
+            EndEpisode();
+            foreach (WalkerAgentMulti agent in otherAgents)
             {
                 agent.SetReward(targetReward);
                 agent.EndEpisode();
