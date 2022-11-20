@@ -67,7 +67,7 @@ public class WalkerAgentMulti : Agent
         if (useCommunication)
         {
             obsSize = otherAgents.Count;
-            communicationList = new List<float>(obsSize);
+            communicationList = new List<float>(new float[(int)(obsSize)]);
         }
 
         // Since I can't set the size from here I just notify the user
@@ -130,6 +130,9 @@ public class WalkerAgentMulti : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        // Near agent penalty and update communicationList
+        CheckNearAgents();
+
         //The only observation is the raycast if communication is used
         if (useCommunication)
             sensor.AddObservation(communicationList);
@@ -163,8 +166,7 @@ public class WalkerAgentMulti : Agent
         else
             AddReward(-existenctialPenalty);
 
-        // Near agent penalty
-        CheckNearAgents();
+
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
