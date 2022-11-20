@@ -3,7 +3,6 @@ from src import *
 import numpy as np
 import os
 import random
-import argparse
 
 def get_worker_id(filename="worker_id.dat"):
     with open(filename, 'a+') as f:
@@ -15,42 +14,62 @@ def get_worker_id(filename="worker_id.dat"):
         return val
 
 def get_env(file_name, no_graphics):
-    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) #set false to visualize
-    return env
-
-def test_ddpg(num_episodes, agent, env, file):
+    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
+    # env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
 
     env.reset()
-    agent.load_weights(file)
+    behavior_name = list(env.behavior_specs)[0]
+    decision_steps, _ = env.get_steps(behavior_name)
+    obs = decision_steps.obs[0]
+
+    return env, obs.shape[0], obs.shape[1]
+
+def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
+
+    env.reset()
+    agent.load_weights(file,env_name)
     agent.is_training = False
-    agent.eval()
-    policy = lambda x: agent.select_action(x, decay_epsilon=False)
+    agent.eval() 
 
     behavior_name = list(env.behavior_specs)[0]
     
     for episode in range(num_episodes):
 
         decision_steps, terminal_steps = env.get_steps(behavior_name)
+        
+        # name = decision_steps.agent_id[0]
+        episode_reward = {}
 
-        name = decision_steps.agent_id[0]
-        done = False 
-        episode_reward = 0
+        for agent_name in decision_steps:
+            episode_reward[agent_name] = 0.
+
+        step = 0
+
+        done = False
+
         while not done:
-            if len(decision_steps) >= 1:
+            step += 1
+            print(step)
+            if len(decision_steps) == num_agents:
                 action = ActionTuple()
-                movement = policy(decision_steps[name].obs)
-                action.add_continuous(movement.reshape(1,2))
+                movement = agent.select_action(decision_steps.obs, decay_epsilon = False).reshape(num_agents,action_size)
+                action.add_continuous(movement)
                 env.set_actions(behavior_name, action)
+            
             env.step()
             
             decision_steps, terminal_steps = env.get_steps(behavior_name)
-            if name in decision_steps:
-                episode_reward+=decision_steps[name].reward
-            if name in terminal_steps: 
-                episode_reward+=terminal_steps[name].reward
+
+            for agent_name in decision_steps:
+                episode_reward[agent_name] += decision_steps[agent_name].reward
+            for agent_name in terminal_steps: 
+                episode_reward[agent_name] += terminal_steps[agent_name].reward
+                print("Agent: %d, episode: %d : reward: %1.1f" %(agent_name, episode,episode_reward))
                 done = True
-                print("Episode %d : reward = %1.1f" %(episode,episode_reward))
-                env.reset()
+
+            # if step > 100:
+            #     env.reset()
+            #     break
 
 def set_seed():
     np.random.seed(42)
@@ -89,44 +108,53 @@ if __name__ =="__main__":
 
     set_seed()
 
-
     folder = os.path.dirname(__file__)
+    env_name = "MULTIAGENT"
     
-    file_name = folder + "//ROLLERBALLswEPcont" #use this to run the binary file
+    
+    file_name = folder + "/" + env_name  #use this to run the binary file
+
 
     # -------------------------- HYPERPARAMETERS
     
     # depends on the binary file
-    observation_size = 8
+    # observation_size = 8
     action_size = 2
-    number_of_agents = 1
+    # number_of_agents = 6
 
 
-    num_iterations = 100_000
-    max_episode_length = 50
-    warmup = 100 #number of actions to perform randomly before starting to use the policy
+    num_iterations = 200_000
+    max_episode_length = 2000
+    warmup = 10000 #number of actions to perform randomly before starting to use the policy
     
     
     # -------------------------- 
 
-    trainer = Trainer(observation_size = observation_size, 
-                      action_size = action_size, 
-                      number_of_agents = number_of_agents
-                      )
+    TRAIN = True
 
     
-    TRAIN = False
     
     if TRAIN:
-        env = get_env(file_name, True)
-        trainer.train(num_iterations = num_iterations, 
+        env, number_of_agents, observation_size = get_env(file_name, True)
+
+        trainer = TrainerMultiAgent(observation_size = observation_size, 
+                    action_size = action_size, 
+                    number_of_agents = number_of_agents
+                    )
+                    
+        trainer.train(resume_model = False,
+                      num_iterations = num_iterations, 
                       env = env,
-                      max_episode_length=max_episode_length,
                       file_to_save = folder,
-                      warmup = warmup)
+                      env_name = env_name,
+                      warmup = warmup,
+                      num_agents=number_of_agents)
     else:
-        env = get_env(file_name, False)
-        test_ddpg(num_episodes = 10, agent = trainer.agent, env = env, file = folder)
+        env, number_of_agents, observation_size = get_env(file_name, False)
+        test_ddpg(num_episodes = 10, agent = TrainerMultiAgent(observation_size = observation_size, 
+                                                                action_size = action_size, 
+                                                                number_of_agents = number_of_agents
+                                                                ).agent, env = env, file = folder, env_name = env_name, num_agents=number_of_agents)
 
 
 

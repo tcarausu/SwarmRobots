@@ -1,4 +1,4 @@
-
+import numpy as np
 import os
 import torch
 from torch.autograd import Variable
@@ -15,6 +15,18 @@ def prCyan(prt): print("\033[96m {}\033[00m" .format(prt))
 def prLightGray(prt): print("\033[97m {}\033[00m" .format(prt))
 def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
 
+def normalize_state(state):
+        max = np.max(state)
+        min = np.min(state)
+        state = (state-min) / (max - min)
+        return state
+
+def normalize_states(state):
+        max = np.max(state,axis = 1)
+        min = np.min(state, axis = 1)
+        state = (state-min[:,None]) / (max[:,None] - min[:,None])
+        return state
+
 def to_numpy(var):
     return var.cpu().data.numpy() if USE_CUDA else var.data.numpy()
 
@@ -25,12 +37,12 @@ def to_tensor(ndarray, volatile=False, requires_grad=False, dtype=FLOAT):
             t =  torch.Tensor(
                 ndarray
             ).type(dtype)
-            t.requires_grad = requires_grad
     else:
         t =  torch.Tensor(
                 ndarray
             ).type(dtype)
-        t.requires_grad = requires_grad
+        
+    t.requires_grad = requires_grad
     return t
 
 def soft_update(target, source, tau):

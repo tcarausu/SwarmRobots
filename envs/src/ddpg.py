@@ -22,8 +22,8 @@ class DDPG(object):
         self.nb_states = nb_states
         self.nb_actions= nb_actions
 
-        self.hidden1 = 128
-        self.hidden2 = 128
+        self.hidden1 = 256
+        self.hidden2 = 256
         self.init_w = 0.003
         self.prate = 0.0001
         self.rate = 0.001
@@ -61,14 +61,22 @@ class DDPG(object):
 
         
 
-        # 
+        
         self.epsilon = 1.0
-        self.s_t = None # Most recent state
-        self.a_t = None # Most recent action
+        # self.s_t = None # Most recent state
+        # self.a_t = None # Most recent action
         self.is_training = True
+
+        self.recent_state = {}
+        self.recent_action = {}
 
         # 
         if USE_CUDA: self.cuda()
+
+    def initialize_states_actions(self, decision_steps):
+        for agent_id in decision_steps:
+            self.recent_state[agent_id] = None
+            self.recent_action[agent_id] = None
 
     def update_policy(self):
         # Sample batch
@@ -84,15 +92,16 @@ class DDPG(object):
         # next_q_values.volatile=False
 
         target_q_batch = to_tensor(reward_batch) + \
-            self.discount*to_tensor(terminal_batch.astype(np.float))*next_q_values
+            self.discount*to_tensor(terminal_batch.astype(np.float))*next_q_values #output of target critic - yi
 
         # Critic update
         self.critic.zero_grad()
 
-        q_batch = self.critic([ to_tensor(state_batch), to_tensor(action_batch) ])
+        q_batch = self.critic([ to_tensor(state_batch), to_tensor(action_batch) ]) #output of critic - Q(si,ai)
         
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
+
         self.critic_optim.step()
 
         # Actor update
@@ -101,10 +110,13 @@ class DDPG(object):
         policy_loss = -self.critic([
             to_tensor(state_batch),
             self.actor(to_tensor(state_batch))
-        ])
+        ]) #update of the actor
 
-        policy_loss = policy_loss.mean()
+
+
+        policy_loss = policy_loss.mean() #TODO understand
         policy_loss.backward()
+
         self.actor_optim.step()
 
         # Target update
@@ -123,17 +135,20 @@ class DDPG(object):
         self.critic.cuda()
         self.critic_target.cuda()
 
-    def observe(self, r_t, s_t1, done):
+    def observe(self, agent_id, r_t, s_t1, done):
         if self.is_training:
-            self.memory.append(self.s_t, self.a_t, r_t, done)
-            self.s_t = s_t1
+            self.memory.append(self.recent_state[agent_id], self.recent_action[agent_id], r_t, done)
+            self.update_obs(agent_id,s_t1)
 
-    def random_action(self):
-        action = np.random.uniform(-1.,1.,self.nb_actions)
-        self.a_t = action
+    def random_action(self, num_agents):
+        action = np.random.uniform(-1.,1.,(num_agents,self.nb_actions))
+        # self.a_t = action
+        
+        self.update_recent_actions(action)
         return action
 
     def select_action(self, s_t, decay_epsilon=True):
+        
         action = to_numpy(
             self.actor(to_tensor(np.array([s_t])))
         ).squeeze(0)
@@ -143,37 +158,42 @@ class DDPG(object):
         if decay_epsilon:
             self.epsilon -= self.depsilon
         
-        self.a_t = action
-        return action
+        self.update_recent_actions(action)
 
-    def reset(self, obs):
-        self.s_t = obs
+        return action
+    
+    def update_recent_actions(self, action):
+        i = 0
+        for agent_id in self.recent_action:
+            self.recent_action[agent_id] = action[i,:]
+            i += 1
+
+    def update_obs(self, agent, obs):
+        self.recent_state[agent] = normalize_state(obs)
+        
+    def reset_random_process(self):
         self.random_process.reset_states()
 
-    def load_weights(self, file_to_save):
+    def load_weights(self, file_to_save,env_name):
         file_to_save += "//data"
 
         self.actor.load_state_dict(
-            torch.load('{}/actor.pkl'.format(file_to_save))
+            torch.load('{}/actor_{}.pkl'.format(file_to_save,env_name))
         )
 
         self.critic.load_state_dict(
-            torch.load('{}/critic.pkl'.format(file_to_save))
+            torch.load('{}/critic_{}.pkl'.format(file_to_save,env_name))
         )
 
-
-    def save_model(self,file_to_save):
+    def save_model(self,file_to_save,env):
         file_to_save += "//data"
         torch.save(
             self.actor.state_dict(),
-            '{}/actor.pkl'.format(file_to_save)
+            '{}/actor_{}.pkl'.format(file_to_save,env)
         )
         torch.save(
             self.critic.state_dict(),
-            '{}/critic.pkl'.format(file_to_save)
+            '{}/critic_{}.pkl'.format(file_to_save,env)
         )
-
-    def seed(self,s):
-        torch.manual_seed(s)
-        if USE_CUDA:
-            torch.cuda.manual_seed(s)
+    
+    
