@@ -9,7 +9,6 @@ using Random = UnityEngine.Random;
 public class WalkerAgentMulti : Agent
 {
     public float playerSpeed = 10;
-    private bool useCommunication; // Retreived from the training area, remember to set the observation size correctly in the prefab
 
     public float existenctialPenalty = 0.001f;
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
@@ -20,6 +19,9 @@ public class WalkerAgentMulti : Agent
 
     public float checkpointReward = 0.15f;
     public float targetReward = 1;
+
+    private bool useCommunication; // Retreived from the training area, remember to set the observation size correctly in the prefab
+    private List<float> communicationList;
 
     private Transform Swarm;
     private List<WalkerAgentMulti> otherAgents;
@@ -63,7 +65,10 @@ public class WalkerAgentMulti : Agent
         // Compute observation size based on the useCommunication parameter
         int obsSize = 0;
         if (useCommunication)
+        {
             obsSize = otherAgents.Count;
+            communicationList = new List<float>(obsSize);
+        }
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -93,9 +98,8 @@ public class WalkerAgentMulti : Agent
     public override void OnEpisodeBegin()
     {
         foreach (Checkpoint cp in clearedCheckpoints)
-        {
             cp.SetActive(true);
-        }
+
 
         clearedCheckpoints.Clear();
         RndSpawn();
@@ -127,25 +131,8 @@ public class WalkerAgentMulti : Agent
     public override void CollectObservations(VectorSensor sensor)
     {
         //The only observation is the raycast if communication is used
-        if (!useCommunication)
-            return;
-        
-        // If the agents are on sigth add the distance to each other as an observation, otherwise 0
-        Vector3 dir;
-        foreach (Agent agent in otherAgents)
-        {
-            dir = (agent.transform.position - transform.position).normalized;
-            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
-            {
-                if (hit.collider.CompareTag("agent"))
-                {
-                    sensor.AddObservation(hit.distance);
-                    AddReward(-(1/hit.distance)*nearAgentPenalty);
-                }
-                else
-                    sensor.AddObservation(0);
-            }
-        }
+        if (useCommunication)
+            sensor.AddObservation(communicationList);
 
         // Target and Agent positions
         //sensor.AddObservation(Target.localPosition.x);
@@ -168,24 +155,54 @@ public class WalkerAgentMulti : Agent
 
         controller.Move(playerSpeed * Time.deltaTime * direction);
         if (direction != Vector3.zero)
-        {
             transform.forward = direction;
-        }
+        
 
         if (reachedGoal)
-        {
-            SetReward(targetReward);
-            EndEpisode();
-            foreach (WalkerAgentMulti agent in otherAgents)
-            {
-                agent.SetReward(targetReward);
-                agent.EndEpisode();
-            }
-
-            MoveTarget();
-        }
+            ReachedTarget();
         else
             AddReward(-existenctialPenalty);
+
+        // Near agent penalty
+        CheckNearAgents();
+    }
+
+    // Set the reward of all agents to 1, End the episode and move the target
+    private void ReachedTarget()
+    {
+        SetReward(targetReward);
+        EndEpisode();
+        foreach (WalkerAgentMulti agent in otherAgents)
+        {
+            agent.SetReward(targetReward);
+            agent.EndEpisode();
+        }
+
+        MoveTarget();
+    }
+
+    // If the agents are on sigth add the negative reward, otherwise 0,
+    // If useCommunication is set to true build the communication list
+    private void CheckNearAgents()
+    {
+        Vector3 dir;
+        if (useCommunication)
+            communicationList.Clear();
+        foreach (Agent agent in otherAgents)
+        {
+            dir = (agent.transform.position - transform.position).normalized;
+            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
+            {
+                if (hit.collider.name.Equals(agent.name))
+                {
+                    AddReward(-(1 / hit.distance) * nearAgentPenalty);
+                    if (useCommunication)
+                        communicationList.Add(hit.distance);
+                }
+                else if (useCommunication)
+                    communicationList.Add(0);
+            }
+        }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)

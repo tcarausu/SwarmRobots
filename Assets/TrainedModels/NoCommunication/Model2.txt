@@ -1,17 +1,17 @@
-Communication: distance to the agents on sight or 0
+NO communication
 No stacked observation
-No stacked raycast
+2 stacked raycasts
 
 2 layers
-128 neurons
-5 milions step
+256 neurons
+10 milions step
 ppo
 
 Penalty
 Existential : 	0.0001
 Hit Wall: 		0.005
 Hit Agent: 		0.003
-Near Agent:		0.01
+Near Agent:		/
 
 Reward
 Checkpoint: 	0.15
