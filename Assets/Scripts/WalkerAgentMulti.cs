@@ -19,6 +19,7 @@ public class WalkerAgentMulti : Agent
 
     public float checkpointReward = 0.15f;
     public float targetReward = 1;
+    public float nearTargetReward = 0.01f;
 
     private bool useCommunication; // Retreived from the training area, remember to set the observation size correctly in the prefab
     private List<float> communicationList;
@@ -100,7 +101,6 @@ public class WalkerAgentMulti : Agent
         foreach (Checkpoint cp in clearedCheckpoints)
             cp.SetActive(true);
 
-
         clearedCheckpoints.Clear();
         RndSpawn();
     }
@@ -130,12 +130,14 @@ public class WalkerAgentMulti : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        // Near agent penalty and update communicationList
-        CheckNearAgents();
 
-        //The only observation is the raycast if communication is used
+        //The only observation is the raycast if communication is not used
         if (useCommunication)
+        {
+            CheckNearAgentsAndUpdateCommunication();
             sensor.AddObservation(communicationList);
+        } else
+            CheckNearAgents();
 
         // Target and Agent positions
         //sensor.AddObservation(Target.localPosition.x);
@@ -159,13 +161,19 @@ public class WalkerAgentMulti : Agent
         controller.Move(playerSpeed * Time.deltaTime * direction);
         if (direction != Vector3.zero)
             transform.forward = direction;
-        
+
 
         if (reachedGoal)
+        {
             ReachedTarget();
-        else
-            AddReward(-existenctialPenalty);
-
+            return;
+        }
+        
+        AddReward(-existenctialPenalty);
+        Vector3 dir = (Target.position - transform.position).normalized;
+        if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
+            if (hit.collider.name.Equals(Target.name))
+                AddReward((1 / hit.distance) * nearTargetReward);
 
     }
 
@@ -184,12 +192,23 @@ public class WalkerAgentMulti : Agent
     }
 
     // If the agents are on sigth add the negative reward, otherwise 0,
-    // If useCommunication is set to true build the communication list
     private void CheckNearAgents()
     {
         Vector3 dir;
-        if (useCommunication)
-            communicationList.Clear();
+        foreach (Agent agent in otherAgents)
+        {
+            dir = (agent.transform.position - transform.position).normalized;
+            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
+                if (hit.collider.name.Equals(agent.name))
+                    AddReward(-(1 / hit.distance) * nearAgentPenalty);
+        }
+    }
+
+    // Near agent penalty and update communicationList
+    private void CheckNearAgentsAndUpdateCommunication()
+    {
+        Vector3 dir;
+        communicationList.Clear();
         foreach (Agent agent in otherAgents)
         {
             dir = (agent.transform.position - transform.position).normalized;
@@ -198,10 +217,9 @@ public class WalkerAgentMulti : Agent
                 if (hit.collider.name.Equals(agent.name))
                 {
                     AddReward(-(1 / hit.distance) * nearAgentPenalty);
-                    if (useCommunication)
-                        communicationList.Add(hit.distance);
+                    communicationList.Add(hit.distance);
                 }
-                else if (useCommunication)
+                else
                     communicationList.Add(0);
             }
         }
