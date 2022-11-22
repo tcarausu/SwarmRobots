@@ -8,7 +8,10 @@ using Random = UnityEngine.Random;
 
 public class WalkerAgentMulti : Agent
 {
+    public enum Movement { UpAndRight, ForwardAndRotate}
+    public Movement mode;
     public float playerSpeed = 10;
+    public float rotationSensitivity = 10;
 
     public float existenctialPenalty = 0.001f;
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
@@ -95,7 +98,6 @@ public class WalkerAgentMulti : Agent
             AddReward(-hitAgentPenalty);
     }
 
-
     public override void OnEpisodeBegin()
     {
         foreach (Checkpoint cp in clearedCheckpoints)
@@ -153,14 +155,25 @@ public class WalkerAgentMulti : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Actions, size = 2
-        Vector3 direction = Vector3.zero;
-        direction.x = actionBuffers.ContinuousActions[0];
-        direction.z = actionBuffers.ContinuousActions[1];
+        if (mode.Equals(Movement.UpAndRight))
+        {
+            Vector3 direction = Vector3.zero;
+            direction.x = actionBuffers.ContinuousActions[0];
+            direction.z = actionBuffers.ContinuousActions[1];
 
-        controller.Move(playerSpeed * Time.deltaTime * direction);
-        if (direction != Vector3.zero)
-            transform.forward = direction;
+            controller.Move(playerSpeed * Time.deltaTime * direction);
+            if (direction != Vector3.zero)
+                transform.forward = direction;
+        }
+        else if (mode.Equals(Movement.ForwardAndRotate))
+        {
+            var rotation = actionBuffers.ContinuousActions[0];
+            var forwardMovement = actionBuffers.ContinuousActions[1];
+
+            controller.Move(forwardMovement * playerSpeed * Time.deltaTime * transform.forward);
+            transform.Rotate(rotation * rotationSensitivity * Vector3.up);
+        }
+
 
 
         if (reachedGoal)
