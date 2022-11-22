@@ -14,6 +14,11 @@ public class Checkpoint : MonoBehaviour
             agentm.Checkpoint(this);
             this.gameObject.SetActive(false);
         }
+        else if (other.TryGetComponent<PocaWalkerAgent>(out PocaWalkerAgent agentp))
+        {
+            agentp.Checkpoint(this);
+            this.gameObject.SetActive(false);
+        }
     }
 
     public void SetActive(bool active){
