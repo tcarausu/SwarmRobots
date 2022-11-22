@@ -9,7 +9,15 @@ public class GoalCheckScript : MonoBehaviour
     {
         if (other.CompareTag("agent"))
         {
-            other.gameObject.GetComponent<WalkerAgentMulti>().ReachGoal();
+            //other.gameObject.GetComponent<WalkerAgentMulti>().ReachGoal();
+            if (other.TryGetComponent<WalkerAgentMulti>(out WalkerAgentMulti agentm))
+            {
+                agentm.ReachGoal();
+            }
+            else if (other.TryGetComponent<PocaWalkerAgent>(out PocaWalkerAgent agentp))
+            {
+                agentp.ReachGoal();
+            }
         }
     }
 }
