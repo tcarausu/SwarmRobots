@@ -1,0 +1,11 @@
+Communication: distance to the agents on sight or 0 (not stacked)
+Stacked raycast (3) 
+
+2 layers
+256 neurons
+5 milions step
+poca
+
+Reward
+Checkpoint: 	0.15
+Target: 		1

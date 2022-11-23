@@ -217,6 +217,7 @@ public class PocaWalkerAgent : Agent
         }
     }
 
+
     private void CheckNearTarget()
     {
         Vector3 dir = (Target.transform.position - transform.position).normalized;

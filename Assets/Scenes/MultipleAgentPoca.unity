@@ -580,6 +580,14 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1850626128116792860, guid: 5b2766b834f107d4a8ea3f098a489430, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1850626128116792860, guid: 5b2766b834f107d4a8ea3f098a489430, type: 3}
+      propertyPath: m_BehaviorType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2993686457079043334, guid: 5b2766b834f107d4a8ea3f098a489430, type: 3}
       propertyPath: m_Name
       value: PocaTrainingArea
