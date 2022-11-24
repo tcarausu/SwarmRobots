@@ -17,13 +17,14 @@ import os
 criterion = nn.MSELoss()
 
 class DDPG(object):
-    def __init__(self, nb_states, nb_actions):
+    def __init__(self, nb_states, nb_actions, n_episodes):
         
         self.nb_states = nb_states
         self.nb_actions= nb_actions
+        self.n_episodes = n_episodes
 
-        self.hidden1 = 256
-        self.hidden2 = 256
+        self.hidden1 = 512
+        self.hidden2 = 512
         self.init_w = 0.003
         self.prate = 0.0001
         self.rate = 0.001
@@ -36,7 +37,7 @@ class DDPG(object):
         self.batch_size =64
         self.tau = 0.001
         self.discount = 0.99
-        self.depsilon = 1.0 / 50000
+        self.depsilon = 1.0 / n_episodes
         
         # Create Actor and Critic Network
         net_cfg = {
@@ -152,24 +153,29 @@ class DDPG(object):
         action = to_numpy(
             self.actor(to_tensor(np.array([s_t])))
         ).squeeze(0)
-        action += self.is_training*max(self.epsilon, 0)*self.random_process.sample()
-        action = np.clip(action, -1., 1.)
 
+        action += self.is_training*max(self.epsilon, 0)*self.random_process.sample()
+        
         if decay_epsilon:
             self.epsilon -= self.depsilon
+
+        #action = np.clip(action, -1., 1.)
         
         self.update_recent_actions(action)
 
         return action
     
     def update_recent_actions(self, action):
+
         i = 0
+
         for agent_id in self.recent_action:
             self.recent_action[agent_id] = action[i,:]
             i += 1
 
     def update_obs(self, agent, obs):
-        self.recent_state[agent] = normalize_state(obs)
+        # self.recent_state[agent] = normalize_state(obs)
+        self.recent_state[agent] = obs
         
     def reset_random_process(self):
         self.random_process.reset_states()

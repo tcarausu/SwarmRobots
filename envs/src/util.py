@@ -15,17 +15,17 @@ def prCyan(prt): print("\033[96m {}\033[00m" .format(prt))
 def prLightGray(prt): print("\033[97m {}\033[00m" .format(prt))
 def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
 
-def normalize_state(state):
-        max = np.max(state)
-        min = np.min(state)
-        state = (state-min) / (max - min)
-        return state
+# def normalize_state(state):
+#         max = np.max(state)
+#         min = np.min(state)
+#         state = (state-min) / (max - min)
+#         return state
 
-def normalize_states(state):
-        max = np.max(state,axis = 1)
-        min = np.min(state, axis = 1)
-        state = (state-min[:,None]) / (max[:,None] - min[:,None])
-        return state
+# def normalize_states(state):
+#         max = np.max(state,axis = 1)
+#         min = np.min(state, axis = 1)
+#         state = (state-min[:,None]) / (max[:,None] - min[:,None])
+#         return state
 
 def to_numpy(var):
     return var.cpu().data.numpy() if USE_CUDA else var.data.numpy()

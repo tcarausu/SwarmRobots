@@ -14,16 +14,20 @@ def get_worker_id(filename="worker_id.dat"):
         return val
 
 def get_env(file_name, no_graphics):
-    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
-    # env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
+    # env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
+    env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
 
     env.reset()
     behavior_name = list(env.behavior_specs)[0]
     decision_steps, _ = env.get_steps(behavior_name)
-    obs = decision_steps.obs[0]
-
-    return env, obs.shape[0], obs.shape[1]
-
+    if len(decision_steps)>1: #using comm
+        comm = decision_steps.obs[0]
+        rayc = decision_steps.obs[1]
+        return env, comm.shape[0], comm.shape[1] + rayc.shape[1]
+    else:
+        obs = decision_steps.obs[0]
+        return env, obs.shape[0], obs.shape[1]
+    
 def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
 
     env.reset()
@@ -117,13 +121,9 @@ if __name__ =="__main__":
 
     # -------------------------- HYPERPARAMETERS
     
-    # depends on the binary file
-    # observation_size = 8
     action_size = 2
-    # number_of_agents = 6
 
-
-    num_iterations = 200_000
+    num_iterations = 1_000_000
     max_episode_length = 2000
     warmup = 10000 #number of actions to perform randomly before starting to use the policy
     
@@ -133,17 +133,16 @@ if __name__ =="__main__":
     TRAIN = True
 
     
-    
     if TRAIN:
         env, number_of_agents, observation_size = get_env(file_name, True)
 
         trainer = TrainerMultiAgent(observation_size = observation_size, 
                     action_size = action_size, 
-                    number_of_agents = number_of_agents
+                    number_of_agents = number_of_agents,
+                    num_iterations=num_iterations
                     )
                     
         trainer.train(resume_model = False,
-                      num_iterations = num_iterations, 
                       env = env,
                       file_to_save = folder,
                       env_name = env_name,
