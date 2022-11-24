@@ -4,16 +4,17 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class PocaWalkerAgent : Agent
 {
     public float playerSpeed = 10;
 
     public float existenctialPenalty = 0.0f;
+
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
     [Header("Inversely proportional to distance")]
     public float nearAgentPenalty = 0.1f;
+
     public float hitWallPenalty = 0.05f;
     public float hitAgentPenalty = 0.03f;
 
@@ -21,7 +22,8 @@ public class PocaWalkerAgent : Agent
     public float checkpointReward = 0.15f;
     public float targetReward = 1;
 
-    private bool useCommunication; // Retreived from the training area, remember to set the observation size correctly in the prefab
+    // Retrieved from the training area, remember to set the observation size correctly in the prefab
+    public bool useCommunication;
     private List<float> communicationList;
 
     private Transform Swarm;
@@ -61,8 +63,6 @@ public class PocaWalkerAgent : Agent
         Target = Goal.Find("Target");
 
         envController = Swarm.parent.GetComponent<SwarmEnvController>();
-
-        useCommunication = Swarm.parent.GetComponent<CommonParameters>().useCommunication;
 
         otherAgents = new List<PocaWalkerAgent>(Swarm.GetComponentsInChildren<PocaWalkerAgent>());
         otherAgents.Remove(this);
@@ -117,14 +117,12 @@ public class PocaWalkerAgent : Agent
         do
         {
             rndPosition = new Vector3(
-            Random.value * spawnSize.x - spawnSize.x / 2,
-            initialPosition.y,
-            Random.value * spawnSize.z - spawnSize.z / 2);
-        }
-        while (!spawnCheck.IsSafePosition(rndPosition, length));
+                Random.value * spawnSize.x - spawnSize.x / 2,
+                initialPosition.y,
+                Random.value * spawnSize.z - spawnSize.z / 2);
+        } while (!spawnCheck.IsSafePosition(rndPosition, length));
 
         transform.localPosition = rndPosition;
-
     }
 
     private void MoveTarget()
@@ -155,7 +153,11 @@ public class PocaWalkerAgent : Agent
     }
 
     private bool reachedGoal;
-    public void ReachGoal() { reachedGoal = true; }
+
+    public void ReachGoal()
+    {
+        reachedGoal = true;
+    }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -179,7 +181,7 @@ public class PocaWalkerAgent : Agent
     private void ReachedTarget()
     {
         MoveTarget();
-        
+
         envController.targetFound();
 
         //SetReward(targetReward);
@@ -189,8 +191,6 @@ public class PocaWalkerAgent : Agent
         //    agent.SetReward(targetReward);
         //    agent.EndEpisode();
         //}
-
-
     }
 
     // If the agents are on sigth add the negative reward, otherwise 0,

@@ -1,23 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GoalCheckScript : MonoBehaviour
 {
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("agent"))
+        if (other.TryGetComponent<WalkerAgentMulti>(out WalkerAgentMulti agentm))
         {
-            //other.gameObject.GetComponent<WalkerAgentMulti>().ReachGoal();
-            if (other.TryGetComponent<WalkerAgentMulti>(out WalkerAgentMulti agentm))
-            {
-                agentm.ReachGoal();
-            }
-            else if (other.TryGetComponent<PocaWalkerAgent>(out PocaWalkerAgent agentp))
-            {
-                agentp.ReachGoal();
-            }
+            agentm.ReachGoal();
+        }
+        else if (other.TryGetComponent<Test>(out Test agentt))
+        {
+            agentt.ReachGoal();
+        }
+        else if (other.TryGetComponent<PocaWalkerAgent>(out PocaWalkerAgent agentp))
+        {
+            agentp.ReachGoal();
         }
     }
 }
