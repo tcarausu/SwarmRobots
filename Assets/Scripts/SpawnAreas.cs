@@ -7,10 +7,10 @@ public class SpawnAreas : MonoBehaviour
     public bool showSpawnAreas;
     private List<Vector3> spawnAreaSizes;
     private List<Vector3> spawnAreaPositions;
+
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        
         spawnAreaSizes = new List<Vector3>();
         spawnAreaPositions = new List<Vector3>();
         foreach (Transform child in transform)
@@ -24,8 +24,8 @@ public class SpawnAreas : MonoBehaviour
         Renderer[] rs = GetComponentsInChildren<Renderer>();
         foreach (Renderer r in rs)
             r.enabled = showSpawnAreas;
-
     }
+
 
     public Vector3 GetRndPosition()
     {

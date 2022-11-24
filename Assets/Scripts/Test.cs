@@ -6,19 +6,17 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class WalkerAgentMulti : Agent
+public class Test : Agent
 {
-    public enum Movement { UpAndRight, ForwardAndRotate}
+    public enum Movement { UpAndRight, ForwardAndRotate }
     public Movement mode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
 
     public float existenctialPenalty = 0.001f;
-
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
     [Header("Inversely proportional to distance")]
     public float nearAgentPenalty = 0.1f;
-
     public float hitWallPenalty = 0.05f;
     public float hitAgentPenalty = 0.03f;
 
@@ -28,11 +26,10 @@ public class WalkerAgentMulti : Agent
 
     // Retrieved from the training area, remember to set the observation size correctly in the prefab
     public bool useCommunication;
-
     private List<float> communicationList;
 
     private Transform Swarm;
-    private List<WalkerAgentMulti> otherAgents;
+    private List<Test> otherAgents;
     private Transform Target;
     private SpawnAreas TargetSpawnAreas;
 
@@ -45,10 +42,6 @@ public class WalkerAgentMulti : Agent
     private Vector3 initialPosition;
     private Vector3 spawnSize;
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
-
-    public GameObject randomisableMazes;
-    private Transform _activeMaze;
-    private Transform Goal;
 
     void Start()
     {
@@ -63,8 +56,28 @@ public class WalkerAgentMulti : Agent
         length = GetComponent<BoxCollider>().size.x;
         spawnSize.x -= length / 2;
         spawnSize.z -= length / 2;
-        
-        activateTheMaze();
+
+        Transform Goal = Swarm.parent.Find("GOAL");
+        GameObject go = Goal.Find("SpawnAreas").gameObject;
+        TargetSpawnAreas = go.GetComponent<SpawnAreas>();
+        Target = Goal.Find("Target");
+
+        otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
+        otherAgents.Remove(this);
+
+        // Compute observation size based on the useCommunication parameter
+        int obsSize = 0;
+        if (useCommunication)
+        {
+            obsSize = otherAgents.Count;
+            communicationList = new List<float>(new float[(int)(obsSize)]);
+        }
+
+        // Since I can't set the size from here I just notify the user
+        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
+            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
+            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
+            "\nRemember you have Communication set to " + useCommunication);
     }
 
     public void Checkpoint(Checkpoint cp)
@@ -84,34 +97,6 @@ public class WalkerAgentMulti : Agent
             AddReward(-hitAgentPenalty);
     }
 
-
-    private void activateTheMaze()
-    {
-        //getting the objectList of Mazes
-        _activeMaze = randomisableMazes.GetComponent<SelectRandomMaze>().getActiveMaze();
-
-        Goal = _activeMaze.Find("GOAL");
-        // Transform Goal = Swarm.parent.Find("GOAL");
-        TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
-        Target = Goal.Find("Target");
-
-        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
-        otherAgents.Remove(this);
-
-        // Compute observation size based on the useCommunication parameter
-        int obsSize = 0;
-        if (useCommunication)
-        {
-            obsSize = otherAgents.Count;
-            communicationList = new List<float>(new float[obsSize]);
-        }
-
-        // Since I can't set the size from here I just notify the user
-        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
-            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
-            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
-            "\nRemember you have Communication set to " + useCommunication);
-    }
     public override void OnEpisodeBegin()
     {
         foreach (Checkpoint cp in clearedCheckpoints)
@@ -127,12 +112,14 @@ public class WalkerAgentMulti : Agent
         do
         {
             rndPosition = new Vector3(
-                Random.value * spawnSize.x - spawnSize.x / 2,
-                initialPosition.y,
-                Random.value * spawnSize.z - spawnSize.z / 2);
-        } while (!spawnCheck.IsSafePosition(rndPosition, length));
+            Random.value * spawnSize.x - spawnSize.x / 2,
+            initialPosition.y,
+            Random.value * spawnSize.z - spawnSize.z / 2);
+        }
+        while (!spawnCheck.IsSafePosition(rndPosition, length));
 
         transform.localPosition = rndPosition;
+
     }
 
     private void MoveTarget()
@@ -150,7 +137,8 @@ public class WalkerAgentMulti : Agent
         {
             CheckNearAgentsAndUpdateCommunication();
             sensor.AddObservation(communicationList);
-        } else
+        }
+        else
             CheckNearAgents();
 
         // Target and Agent positions
@@ -163,11 +151,7 @@ public class WalkerAgentMulti : Agent
     }
 
     private bool reachedGoal;
-
-    public void ReachGoal()
-    {
-        reachedGoal = true;
-    }
+    public void ReachGoal() { reachedGoal = true; }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -191,17 +175,19 @@ public class WalkerAgentMulti : Agent
         }
 
 
+
         if (reachedGoal)
         {
             ReachedTarget();
             return;
         }
-        
+
         AddReward(-existenctialPenalty);
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
             if (hit.collider.name.Equals(Target.name))
                 AddReward((1 / hit.distance) * nearTargetReward);
+
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
@@ -209,13 +195,12 @@ public class WalkerAgentMulti : Agent
     {
         SetReward(targetReward);
         EndEpisode();
-        foreach (WalkerAgentMulti agent in otherAgents)
+        foreach (Test agent in otherAgents)
         {
             agent.SetReward(targetReward);
             agent.EndEpisode();
         }
 
-        activateTheMaze();
         MoveTarget();
     }
 
