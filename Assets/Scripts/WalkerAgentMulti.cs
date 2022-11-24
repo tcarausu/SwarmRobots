@@ -4,11 +4,15 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class WalkerAgentMulti : Agent
 {
-    public enum Movement { UpAndRight, ForwardAndRotate}
+    public enum Movement
+    {
+        UpAndRight,
+        ForwardAndRotate
+    }
+
     public Movement mode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
@@ -46,9 +50,11 @@ public class WalkerAgentMulti : Agent
     private Vector3 spawnSize;
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
 
-    public GameObject randomisableMazes;
+    public GameObject usableTrainingArea;
     private Transform _activeMaze;
     private Transform Goal;
+
+    public bool hasRandomMaze;
 
     void Start()
     {
@@ -63,8 +69,11 @@ public class WalkerAgentMulti : Agent
         length = GetComponent<BoxCollider>().size.x;
         spawnSize.x -= length / 2;
         spawnSize.z -= length / 2;
-        
-        activateTheMaze();
+
+        if (hasRandomMaze)
+            activateTheMaze();
+        else
+            useExisitingMaze();
     }
 
     public void Checkpoint(Checkpoint cp)
@@ -85,10 +94,35 @@ public class WalkerAgentMulti : Agent
     }
 
 
+    private void useExisitingMaze()
+    {
+        Goal = usableTrainingArea.transform.Find("GOAL");
+        // Transform Goal = Swarm.parent.Find("GOAL");
+        TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
+        Target = Goal.Find("Target");
+
+        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
+        otherAgents.Remove(this);
+
+        // Compute observation size based on the useCommunication parameter
+        int obsSize = 0;
+        if (useCommunication)
+        {
+            obsSize = otherAgents.Count;
+            communicationList = new List<float>(new float[obsSize]);
+        }
+
+        // Since I can't set the size from here I just notify the user
+        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
+            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
+            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
+            "\nRemember you have Communication set to " + useCommunication);
+    }
+
     private void activateTheMaze()
     {
         //getting the objectList of Mazes
-        _activeMaze = randomisableMazes.GetComponent<SelectRandomMaze>().getActiveMaze();
+        _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
 
         Goal = _activeMaze.Find("GOAL");
         // Transform Goal = Swarm.parent.Find("GOAL");
@@ -112,6 +146,7 @@ public class WalkerAgentMulti : Agent
             GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
             "\nRemember you have Communication set to " + useCommunication);
     }
+
     public override void OnEpisodeBegin()
     {
         foreach (Checkpoint cp in clearedCheckpoints)
@@ -144,13 +179,13 @@ public class WalkerAgentMulti : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-
         //The only observation is the raycast if communication is not used
         if (useCommunication)
         {
             CheckNearAgentsAndUpdateCommunication();
             sensor.AddObservation(communicationList);
-        } else
+        }
+        else
             CheckNearAgents();
 
         // Target and Agent positions
@@ -196,7 +231,7 @@ public class WalkerAgentMulti : Agent
             ReachedTarget();
             return;
         }
-        
+
         AddReward(-existenctialPenalty);
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
@@ -215,7 +250,10 @@ public class WalkerAgentMulti : Agent
             agent.EndEpisode();
         }
 
-        activateTheMaze();
+        if (hasRandomMaze)
+            activateTheMaze();
+        else
+            useExisitingMaze();
         MoveTarget();
     }
 

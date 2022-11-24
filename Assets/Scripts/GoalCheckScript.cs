@@ -8,10 +8,13 @@ public class GoalCheckScript : MonoBehaviour
         {
             agentm.ReachGoal();
         }
-
         else if (other.TryGetComponent<Test>(out Test agentt))
         {
             agentt.ReachGoal();
+        }
+        else if (other.TryGetComponent<PocaWalkerAgent>(out PocaWalkerAgent agentp))
+        {
+            agentp.ReachGoal();
         }
     }
 }
