@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 3499992,
+                "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-3499992.onnx",
+                "reward": null,
+                "creation_time": 1669407616.475214,
+                "auxillary_file_paths": [
+                    "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-3499992.pt"
+                ]
+            },
+            {
+                "steps": 3999980,
+                "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-3999980.onnx",
+                "reward": null,
+                "creation_time": 1669410065.7770116,
+                "auxillary_file_paths": [
+                    "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-3999980.pt"
+                ]
+            },
+            {
+                "steps": 4499940,
+                "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-4499940.onnx",
+                "reward": null,
+                "creation_time": 1669412453.3654826,
+                "auxillary_file_paths": [
+                    "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-4499940.pt"
+                ]
+            },
+            {
+                "steps": 4999976,
+                "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-4999976.onnx",
+                "reward": null,
+                "creation_time": 1669414852.926726,
+                "auxillary_file_paths": [
+                    "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-4999976.pt"
+                ]
+            },
+            {
+                "steps": 5000040,
+                "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-5000040.onnx",
+                "reward": null,
+                "creation_time": 1669414852.9959962,
+                "auxillary_file_paths": [
+                    "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-5000040.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5000040,
+            "file_path": "results\\Multi3Layer6agent\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1669414852.9959962,
+            "auxillary_file_paths": [
+                "results\\Multi3Layer6agent\\WalkerAgentMulti\\WalkerAgentMulti-5000040.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}
