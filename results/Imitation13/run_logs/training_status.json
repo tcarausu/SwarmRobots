@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 8499072,
+                "file_path": "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-8499072.onnx",
+                "reward": 8.990706890821457,
+                "creation_time": 1669418965.9524052,
+                "auxillary_file_paths": [
+                    "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-8499072.pt"
+                ]
+            },
+            {
+                "steps": 8999940,
+                "file_path": "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-8999940.onnx",
+                "reward": -10.844430287679037,
+                "creation_time": 1669420359.6248052,
+                "auxillary_file_paths": [
+                    "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-8999940.pt"
+                ]
+            },
+            {
+                "steps": 9499998,
+                "file_path": "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-9499998.onnx",
+                "reward": 1.9720176377079703,
+                "creation_time": 1669421909.5690458,
+                "auxillary_file_paths": [
+                    "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-9499998.pt"
+                ]
+            },
+            {
+                "steps": 9999928,
+                "file_path": "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-9999928.onnx",
+                "reward": 2.234210604429245,
+                "creation_time": 1669424327.7057726,
+                "auxillary_file_paths": [
+                    "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-9999928.pt"
+                ]
+            },
+            {
+                "steps": 10002208,
+                "file_path": "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-10002208.onnx",
+                "reward": 2.8989660888910294,
+                "creation_time": 1669424328.145358,
+                "auxillary_file_paths": [
+                    "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-10002208.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 10002208,
+            "file_path": "results\\Imitation13\\WalkerAgentMulti.onnx",
+            "reward": 2.8989660888910294,
+            "creation_time": 1669424328.145358,
+            "auxillary_file_paths": [
+                "results\\Imitation13\\WalkerAgentMulti\\WalkerAgentMulti-10002208.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

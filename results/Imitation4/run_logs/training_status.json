@@ -1,0 +1,29 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 0,
+                "file_path": "results\\Imitation4\\WalkerAgentMulti\\WalkerAgentMulti-0.onnx",
+                "reward": null,
+                "creation_time": 1669425869.1943371,
+                "auxillary_file_paths": [
+                    "results\\Imitation4\\WalkerAgentMulti\\WalkerAgentMulti-0.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 0,
+            "file_path": "results\\Imitation4\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1669425869.1943371,
+            "auxillary_file_paths": [
+                "results\\Imitation4\\WalkerAgentMulti\\WalkerAgentMulti-0.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

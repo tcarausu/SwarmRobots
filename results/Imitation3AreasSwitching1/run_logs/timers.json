@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1669676001",
+        "python_version": "3.7.9 (tags/v3.7.9:13c94747c7, Aug 17 2020, 18:58:18) [MSC v.1900 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\giova\\Desktop\\Magistrale\\DeepLearningForGamesAndSimulations\\Project\\Code\\DLGSproject\\Scripts\\mlagents-learn config/OurConfig/multiagent_imitation.yaml --run-id=Imitation3AreasSwitching1",
+        "mlagents_version": "0.29.0",
+        "mlagents_envs_version": "0.29.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.7.1+cu110",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1669676063"
+    },
+    "total": 61.366440000000004,
+    "count": 1,
+    "self": 0.008286099999999408,
+    "children": {
+        "run_training.setup": {
+            "total": 0.1734464,
+            "count": 1,
+            "self": 0.1734464
+        },
+        "TrainerController.start_learning": {
+            "total": 61.1847075,
+            "count": 1,
+            "self": 0.0001790000000028158,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 61.1845046,
+                    "count": 1,
+                    "self": 61.1845046
+                },
+                "TrainerController._save_models": {
+                    "total": 2.390000000218606e-05,
+                    "count": 1,
+                    "self": 2.390000000218606e-05
+                }
+            }
+        }
+    }
+}

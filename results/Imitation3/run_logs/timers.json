@@ -1,0 +1,89 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1669425780",
+        "python_version": "3.7.9 (tags/v3.7.9:13c94747c7, Aug 17 2020, 18:58:18) [MSC v.1900 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\giova\\Desktop\\Magistrale\\DeepLearningForGamesAndSimulations\\Project\\Code\\DLGSproject\\Scripts\\mlagents-learn config\\OurConfig\\multiagent_imitation.yaml --run-id=Imitation3",
+        "mlagents_version": "0.29.0",
+        "mlagents_envs_version": "0.29.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.7.1+cu110",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1669425786"
+    },
+    "total": 6.819845600000001,
+    "count": 1,
+    "self": 0.015123900000000745,
+    "children": {
+        "run_training.setup": {
+            "total": 0.10882459999999994,
+            "count": 1,
+            "self": 0.10882459999999994
+        },
+        "TrainerController.start_learning": {
+            "total": 6.6958971,
+            "count": 1,
+            "self": 0.00015449999999983532,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 6.6903671000000005,
+                    "count": 1,
+                    "self": 6.387759200000001,
+                    "children": {
+                        "demo_to_buffer": {
+                            "total": 0.30260789999999904,
+                            "count": 1,
+                            "self": 9.289999999939624e-05,
+                            "children": {
+                                "load_demonstration": {
+                                    "total": 0.01799779999999984,
+                                    "count": 1,
+                                    "self": 0.017779199999999662,
+                                    "children": {
+                                        "read_file": {
+                                            "total": 0.00021860000000017976,
+                                            "count": 1,
+                                            "self": 0.00021860000000017976
+                                        }
+                                    }
+                                },
+                                "make_demo_buffer": {
+                                    "total": 0.2845171999999998,
+                                    "count": 1,
+                                    "self": 0.04977570000001208,
+                                    "children": {
+                                        "steps_from_proto": {
+                                            "total": 0.23474149999998772,
+                                            "count": 606,
+                                            "self": 0.12248620000000177,
+                                            "children": {
+                                                "_process_rank_one_or_two_observation": {
+                                                    "total": 0.11225529999998596,
+                                                    "count": 2424,
+                                                    "self": 0.11225529999998596
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "TrainerController._save_models": {
+                    "total": 0.005375499999999533,
+                    "count": 1,
+                    "self": 0.0006629999999994141,
+                    "children": {
+                        "RLTrainer._checkpoint": {
+                            "total": 0.004712500000000119,
+                            "count": 1,
+                            "self": 0.004712500000000119
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

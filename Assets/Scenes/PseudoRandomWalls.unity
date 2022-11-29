@@ -584,6 +584,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TrainingAreaRandom (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8036428992538927336, guid: 7540265a4ad5eac40acfc17b7121999a, type: 3}
+      propertyPath: mode
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7540265a4ad5eac40acfc17b7121999a, type: 3}
 --- !u!1001 &5614050101720988696

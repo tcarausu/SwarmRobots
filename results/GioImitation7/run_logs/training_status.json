@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 499444,
+                "file_path": "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-499444.onnx",
+                "reward": -8.067662715911865,
+                "creation_time": 1669638229.2877834,
+                "auxillary_file_paths": [
+                    "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-499444.pt"
+                ]
+            },
+            {
+                "steps": 999636,
+                "file_path": "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-999636.onnx",
+                "reward": -1.8874148726463318,
+                "creation_time": 1669640267.6118712,
+                "auxillary_file_paths": [
+                    "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-999636.pt"
+                ]
+            },
+            {
+                "steps": 1499458,
+                "file_path": "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-1499458.onnx",
+                "reward": 0.04266370968385176,
+                "creation_time": 1669642509.3687308,
+                "auxillary_file_paths": [
+                    "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-1499458.pt"
+                ]
+            },
+            {
+                "steps": 1999528,
+                "file_path": "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-1999528.onnx",
+                "reward": -10.076615333557129,
+                "creation_time": 1669645051.2981937,
+                "auxillary_file_paths": [
+                    "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-1999528.pt"
+                ]
+            },
+            {
+                "steps": 2333036,
+                "file_path": "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-2333036.onnx",
+                "reward": null,
+                "creation_time": 1669646756.546485,
+                "auxillary_file_paths": [
+                    "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-2333036.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 2333036,
+            "file_path": "results\\GioImitation7\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1669646756.546485,
+            "auxillary_file_paths": [
+                "results\\GioImitation7\\WalkerAgentMulti\\WalkerAgentMulti-2333036.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

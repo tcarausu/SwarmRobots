@@ -1,5 +1,7 @@
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from src import *
+from src.util import *
+
 import numpy as np
 import os
 import random
@@ -14,8 +16,8 @@ def get_worker_id(filename="worker_id.dat"):
         return val
 
 def get_env(file_name, no_graphics):
-    # env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
-    env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
+    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
+    # env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
 
     env.reset()
     behavior_name = list(env.behavior_specs)[0]
@@ -28,12 +30,12 @@ def get_env(file_name, no_graphics):
         obs = decision_steps.obs[0]
         return env, obs.shape[0], obs.shape[1]
     
-def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
+def test_ddpg(num_episodes, brain, env, file, env_name, identifier, num_agents):
 
     env.reset()
-    agent.load_weights(file,env_name)
-    agent.is_training = False
-    agent.eval() 
+    brain.load_weights(file,identifier, env_name)
+    brain.is_training = False
+    brain.eval() 
 
     behavior_name = list(env.behavior_specs)[0]
     
@@ -52,11 +54,15 @@ def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
         done = False
 
         while not done:
+
             step += 1
             print(step)
+
             if len(decision_steps) == num_agents:
+
                 action = ActionTuple()
-                movement = agent.select_action(decision_steps.obs, decay_epsilon = False).reshape(num_agents,action_size)
+                movement = brain.select_action(get_unique_obs(decision_steps.obs), decay_epsilon = False).reshape(num_agents,action_size)
+                print(movement)
                 action.add_continuous(movement)
                 env.set_actions(behavior_name, action)
             
@@ -113,24 +119,25 @@ if __name__ =="__main__":
     set_seed()
 
     folder = os.path.dirname(__file__)
-    env_name = "MULTIAGENT"
+    env_name = "MULTIAGENT_EASY"
     
+    identifier = "//1//"
     
-    file_name = folder + "/" + env_name  #use this to run the binary file
-
+    file_name = folder + "/" + env_name  
+    # file_name = folder + identifier + "/" + env_name  
 
     # -------------------------- HYPERPARAMETERS
     
     action_size = 2
 
-    num_iterations = 1_000_000
+    num_iterations = 200_000
     max_episode_length = 2000
-    warmup = 10000 #number of actions to perform randomly before starting to use the policy
+    warmup = 10_000 #number of actions to perform randomly before starting to use the policy
     
     
     # -------------------------- 
 
-    TRAIN = True
+    TRAIN = False
 
     
     if TRAIN:
@@ -145,15 +152,16 @@ if __name__ =="__main__":
         trainer.train(resume_model = False,
                       env = env,
                       file_to_save = folder,
+                      identifier=identifier,
                       env_name = env_name,
                       warmup = warmup,
                       num_agents=number_of_agents)
     else:
         env, number_of_agents, observation_size = get_env(file_name, False)
-        test_ddpg(num_episodes = 10, agent = TrainerMultiAgent(observation_size = observation_size, 
+        test_ddpg(num_episodes = 10, brain = TrainerMultiAgent(observation_size = observation_size, 
                                                                 action_size = action_size, 
-                                                                number_of_agents = number_of_agents
-                                                                ).agent, env = env, file = folder, env_name = env_name, num_agents=number_of_agents)
+                                                                number_of_agents = number_of_agents,
+                                                                ).agent, env = env, file = folder, env_name = env_name, identifier = identifier, num_agents=number_of_agents)
 
 
 

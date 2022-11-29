@@ -227,6 +227,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 3120759753246790136}
     m_Modifications:
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: usableTrainingArea
+      value: 
+      objectReference: {fileID: 4119377124599678579}
     - target: {fileID: 4447214788014164744, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_Name
       value: Test
@@ -275,6 +279,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4447214788014164748, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 5022602860645237092, guid: be8eef233f5c0554baa59d5a38a88933, type: 3}
+    - target: {fileID: 4447214788014164748, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: m_BrainParameters.VectorObservationSize
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6012184053120079622, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: DecisionPeriod
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8998901573141101073, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: m_SphereCastRadius
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
 --- !u!4 &306453318 stripped
@@ -289,6 +309,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 3120759753246790136}
     m_Modifications:
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: usableTrainingArea
+      value: 
+      objectReference: {fileID: 4119377124599678579}
     - target: {fileID: 4447214788014164744, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_Name
       value: Test (2)
@@ -639,6 +663,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 3120759753246790136}
     m_Modifications:
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: playerSpeed
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: usableTrainingArea
+      value: 
+      objectReference: {fileID: 4119377124599678579}
     - target: {fileID: 4447214788014164744, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_Name
       value: Test (3)
@@ -882,6 +914,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 3120759753246790136}
     m_Modifications:
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: usableTrainingArea
+      value: 
+      objectReference: {fileID: 4119377124599678579}
     - target: {fileID: 4447214788014164744, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_Name
       value: Test (1)

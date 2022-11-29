@@ -1,9 +1,13 @@
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
+
+using Debug = UnityEngine.Debug;
 
 public class WalkerAgentMulti : Agent
 {
@@ -30,9 +34,12 @@ public class WalkerAgentMulti : Agent
     public float targetReward = 1;
     public float nearTargetReward = 0.01f;
 
+    private int numEpisodes = 0;
+    public int changePosTarget = 10;
+
     // Retrieved from the training area, remember to set the observation size correctly in the prefab
     public bool useCommunication;
-
+    
     private List<float> communicationList;
 
     private Transform Swarm;
@@ -43,6 +50,8 @@ public class WalkerAgentMulti : Agent
     private CharacterController controller;
 
     private List<Checkpoint> clearedCheckpoints;
+
+    private Vector3 targetInitialPosition;
 
     private Transform MySpawnArea;
     private SpawnCheck spawnCheck;
@@ -55,6 +64,9 @@ public class WalkerAgentMulti : Agent
     private Transform Goal;
 
     public bool hasRandomMaze;
+
+    [System.NonSerialized]
+    public bool seenTarget = false;
 
     void Start()
     {
@@ -69,6 +81,8 @@ public class WalkerAgentMulti : Agent
         length = GetComponent<BoxCollider>().size.x;
         spawnSize.x -= length / 2;
         spawnSize.z -= length / 2;
+
+        
 
         if (hasRandomMaze)
             activateTheMaze();
@@ -101,6 +115,8 @@ public class WalkerAgentMulti : Agent
         TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
         Target = Goal.Find("Target");
 
+        targetInitialPosition = Target.localPosition;
+
         otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
         otherAgents.Remove(this);
 
@@ -108,7 +124,7 @@ public class WalkerAgentMulti : Agent
         int obsSize = 0;
         if (useCommunication)
         {
-            obsSize = otherAgents.Count;
+            obsSize = otherAgents.Count + 4;
             communicationList = new List<float>(new float[obsSize]);
         }
 
@@ -136,7 +152,7 @@ public class WalkerAgentMulti : Agent
         int obsSize = 0;
         if (useCommunication)
         {
-            obsSize = otherAgents.Count;
+            obsSize = otherAgents.Count + 2;
             communicationList = new List<float>(new float[obsSize]);
         }
 
@@ -172,8 +188,19 @@ public class WalkerAgentMulti : Agent
 
     private void MoveTarget()
     {
-        // Move the target to a new spot
-        Target.localPosition = TargetSpawnAreas.GetRndPosition();
+        
+        if (numEpisodes % changePosTarget == 0)
+        {
+            Debug.Log("target moved");
+            Target.localPosition = TargetSpawnAreas.GetRndPosition();
+            targetInitialPosition = Target.localPosition;
+
+        }
+        else
+        {
+            Target.localPosition = targetInitialPosition;
+        }
+       
         reachedGoal = false;
     }
 
@@ -184,10 +211,13 @@ public class WalkerAgentMulti : Agent
         {
             CheckNearAgentsAndUpdateCommunication();
             sensor.AddObservation(communicationList);
+            sensor.AddObservation(transform.localPosition.x);
+            sensor.AddObservation(transform.localPosition.z);
         }
         else
-            CheckNearAgents();
+            CheckNearAgents();                          
 
+                                                               
         // Target and Agent positions
         //sensor.AddObservation(Target.localPosition.x);
         //sensor.AddObservation(Target.localPosition.z);
@@ -232,11 +262,7 @@ public class WalkerAgentMulti : Agent
             return;
         }
 
-        AddReward(-existenctialPenalty);
-        Vector3 dir = (Target.position - transform.position).normalized;
-        if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
-            if (hit.collider.name.Equals(Target.name))
-                AddReward((1 / hit.distance) * nearTargetReward);
+        
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
@@ -244,8 +270,11 @@ public class WalkerAgentMulti : Agent
     {
         SetReward(targetReward);
         EndEpisode();
+        numEpisodes += 1;
+        
         foreach (WalkerAgentMulti agent in otherAgents)
         {
+            agent.numEpisodes += 1;
             agent.SetReward(targetReward);
             agent.EndEpisode();
         }
@@ -254,7 +283,9 @@ public class WalkerAgentMulti : Agent
             activateTheMaze();
         else
             useExisitingMaze();
+
         MoveTarget();
+        
     }
 
     // If the agents are on sigth add the negative reward, otherwise 0,
@@ -273,8 +304,11 @@ public class WalkerAgentMulti : Agent
     // Near agent penalty and update communicationList
     private void CheckNearAgentsAndUpdateCommunication()
     {
+        AddReward(-existenctialPenalty);
+
         Vector3 dir;
         communicationList.Clear();
+
         foreach (Agent agent in otherAgents)
         {
             dir = (agent.transform.position - transform.position).normalized;
@@ -289,6 +323,44 @@ public class WalkerAgentMulti : Agent
                     communicationList.Add(0);
             }
         }
+
+
+        Vector3 dirT = (Target.position - transform.position).normalized;
+        if (Physics.Raycast(transform.position, dirT, out RaycastHit hitT))
+        {
+            if (hitT.collider.name.Equals(Target.name))
+            {
+                AddReward((1 / hitT.distance) * nearTargetReward);
+                communicationList.Add(Target.localPosition.x);
+                communicationList.Add(Target.localPosition.z);
+                if (!seenTarget) //first time it is seen
+                {
+                    seenTarget = true;
+                    foreach (WalkerAgentMulti agent in otherAgents)
+                    {
+                        agent.seenTarget = true;
+                    }
+                }
+            }
+            else
+            {
+                if (seenTarget)
+                {
+                    communicationList.Add(Target.localPosition.x);
+                    communicationList.Add(Target.localPosition.z);
+                }
+                else
+                {
+                    communicationList.Add(0);
+                    communicationList.Add(0);
+                }
+
+            }
+
+        }
+        
+
+
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)

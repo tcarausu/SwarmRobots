@@ -7,7 +7,7 @@ from .util import *
 
 class TrainerMultiAgent:
 
-    def __init__(self, observation_size, action_size, number_of_agents,num_iterations):
+    def __init__(self, observation_size, action_size, number_of_agents,num_iterations = 1):
 
         self.agent = DDPG(observation_size, action_size, num_iterations)
 
@@ -18,22 +18,10 @@ class TrainerMultiAgent:
         self.num_iterations = num_iterations
         
 
-    def get_unique_obs(self, obs):
-        if len(obs) > 1:
-            if len(obs[0].shape)>1:
-                return np.concatenate([obs[0], obs[1]/self.max_distance], axis = 1)
-            else:
-                return np.concatenate([obs[0]/self.max_distance, obs[1]])
-        else:
-            return obs
-
-
-
-
-    def train(self, resume_model, env, file_to_save, env_name, warmup, num_agents):
+    def train(self, resume_model, env, file_to_save, identifier,env_name, warmup, num_agents):
         
         if resume_model:
-            self.agent.load_weights(file_to_save, env_name)
+            self.agent.load_weights(file_to_save, identifier, env_name)
         
         # env.reset() env is reset when created
 
@@ -61,7 +49,7 @@ class TrainerMultiAgent:
         self.agent.reset_random_process()
 
         for agent_id in decision_steps:
-            self.agent.update_obs(agent_id, self.get_unique_obs(decision_steps[agent_id].obs)) 
+            self.agent.update_obs(agent_id, get_unique_obs(decision_steps[agent_id].obs)) 
             episode[agent_id] = 0
             episode_reward[agent_id] = 0.
             episode_steps[agent_id] = 0
@@ -76,16 +64,17 @@ class TrainerMultiAgent:
             #         self.agent.reset_random_process()
             #         self.agent.update_obs(agent_id,decision_steps[agent_id].obs[0])
 
-            if terminal_steps:
+            if terminal_steps:  
+                self.agent.reset_random_process()
                 decision_steps, terminal_steps = env.get_steps(behavior_name)
                 for agent_id in decision_steps:
-                    self.agent.update_obs(agent_id,self.get_unique_obs(decision_steps[agent_id].obs))
+                    self.agent.update_obs(agent_id,get_unique_obs(decision_steps[agent_id].obs))
 
             if step <= warmup:
                 action = self.agent.random_action(num_agents)
             else:
                 # action = self.agent.select_action(self.get_unique_obs(normalize_states(decision_steps.obs)))
-                action = self.agent.select_action(self.get_unique_obs(decision_steps.obs))
+                action = self.agent.select_action(get_unique_obs(decision_steps.obs))
             
             # action_copy = action.copy()
             # action_reshaped = action_copy.reshape(num_agents,self.action_size)
@@ -102,7 +91,7 @@ class TrainerMultiAgent:
                 done = True
                 reward = terminal_steps[agent_id].reward
                 
-                observation = self.get_unique_obs(terminal_steps[agent_id].obs)
+                observation = get_unique_obs(terminal_steps[agent_id].obs)
 
                 self.agent.observe(agent_id, reward, observation,done)
 
@@ -117,27 +106,22 @@ class TrainerMultiAgent:
             for agent_id in decision_steps:
                 done = False
                 reward = decision_steps[agent_id].reward
-                observation = self.get_unique_obs(decision_steps[agent_id].obs)
+                observation = get_unique_obs(decision_steps[agent_id].obs)
                 self.agent.observe(agent_id,reward,observation,done)
 
                 episode_steps[agent_id] += 1
                 episode_reward[agent_id] += reward
 
             
-            
-            
-
-                
-            
             # if episode_steps >= max_episode_length:
             #     done = True
 
             if step > warmup :
                 self.agent.update_policy()
-            
+                if step % 100 == 0:
+                    self.agent.save_model(file_to_save, identifier, env_name)
 
-            if step % 100 == 0:
-                self.agent.save_model(file_to_save, env_name)
+                
 
             step += 1
 

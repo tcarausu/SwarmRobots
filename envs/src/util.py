@@ -27,6 +27,15 @@ def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
 #         state = (state-min[:,None]) / (max[:,None] - min[:,None])
 #         return state
 
+def get_unique_obs(obs, max_distance = 50):
+    if len(obs) > 1:
+        if len(obs[0].shape)>1:
+            return np.concatenate([obs[0], obs[1]/max_distance], axis = 1)
+        else:
+            return np.concatenate([obs[0]/max_distance, obs[1]])
+    else:
+        return obs
+
 def to_numpy(var):
     return var.cpu().data.numpy() if USE_CUDA else var.data.numpy()
 

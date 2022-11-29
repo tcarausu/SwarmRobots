@@ -1,0 +1,29 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 452704,
+                "file_path": "results\\GioImitation6\\WalkerAgentMulti\\WalkerAgentMulti-452704.onnx",
+                "reward": -8.506394386291504,
+                "creation_time": 1669631937.7133532,
+                "auxillary_file_paths": [
+                    "results\\GioImitation6\\WalkerAgentMulti\\WalkerAgentMulti-452704.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 452704,
+            "file_path": "results\\GioImitation6\\WalkerAgentMulti.onnx",
+            "reward": -8.506394386291504,
+            "creation_time": 1669631937.7133532,
+            "auxillary_file_paths": [
+                "results\\GioImitation6\\WalkerAgentMulti\\WalkerAgentMulti-452704.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

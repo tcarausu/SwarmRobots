@@ -1,0 +1,47 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1669671291",
+        "python_version": "3.7.9 (tags/v3.7.9:13c94747c7, Aug 17 2020, 18:58:18) [MSC v.1900 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\giova\\Desktop\\Magistrale\\DeepLearningForGamesAndSimulations\\Project\\Code\\DLGSproject\\Scripts\\mlagents-learn config/OurConfig/multiagent_imitation.yaml --run-id=ImitationEasy",
+        "mlagents_version": "0.29.0",
+        "mlagents_envs_version": "0.29.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.7.1+cu110",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1669671303"
+    },
+    "total": 11.451194,
+    "count": 1,
+    "self": 10.0546487,
+    "children": {
+        "run_training.setup": {
+            "total": 0.26005969999999934,
+            "count": 1,
+            "self": 0.26005969999999934
+        },
+        "TrainerController.start_learning": {
+            "total": 1.1364856000000003,
+            "count": 1,
+            "self": 0.0005846000000033769,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 1.135887499999999,
+                    "count": 1,
+                    "self": 1.135887499999999
+                },
+                "trainer_threads": {
+                    "total": 1.5999999991578306e-06,
+                    "count": 1,
+                    "self": 1.5999999991578306e-06
+                },
+                "TrainerController._save_models": {
+                    "total": 1.1899999998732369e-05,
+                    "count": 1,
+                    "self": 1.1899999998732369e-05
+                }
+            }
+        }
+    }
+}
