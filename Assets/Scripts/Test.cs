@@ -10,7 +10,7 @@ public class Test : Agent
 {
     public enum Movement { UpAndRight, ForwardAndRotate }
     public Movement mode;
-    public float playerSpeed = 10;
+    public float playerSpeed = 20;
     public float rotationSensitivity = 10;
 
     public float existenctialPenalty = 0.001f;
@@ -24,42 +24,47 @@ public class Test : Agent
     public float targetReward = 1;
     public float nearTargetReward = 0.01f;
 
-    // Retrieved from the training area, remember to set the observation size correctly in the prefab
     public bool useCommunication;
     private List<float> communicationList;
 
     private Transform Swarm;
     private List<Test> otherAgents;
     private Transform Target;
-    private SpawnAreas TargetSpawnAreas;
+//    private SpawnAreas TargetSpawnAreas;
 
     private CharacterController controller;
 
-    private List<Checkpoint> clearedCheckpoints;
+//    private List<Checkpoint> clearedCheckpoints;
 
-    private Transform MySpawnArea;
-    private SpawnCheck spawnCheck;
+//    private Transform MySpawnArea;
+//    private SpawnCheck spawnCheck;
     private Vector3 initialPosition;
-    private Vector3 spawnSize;
-    private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
+//    private Vector3 spawnSize;
+//    private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
+
+    private int testNumber = 0;
+    private System.DateTime startTime;
+    public List<Vector3> TargetPositions; 
+    public int maxMoves;
+    private int moves = 0;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        clearedCheckpoints = new List<Checkpoint>();
+ //       clearedCheckpoints = new List<Checkpoint>();
 
         Swarm = transform.parent;
-        spawnCheck = Swarm.gameObject.GetComponent<SpawnCheck>();
-        MySpawnArea = Swarm.Find("SpawnArea");
+ //       spawnCheck = Swarm.gameObject.GetComponent<SpawnCheck>();
+ //       MySpawnArea = Swarm.Find("SpawnArea");
         initialPosition = transform.localPosition;
-        spawnSize = MySpawnArea.GetComponent<Renderer>().bounds.size;
-        length = GetComponent<BoxCollider>().size.x;
-        spawnSize.x -= length / 2;
-        spawnSize.z -= length / 2;
+ //       spawnSize = MySpawnArea.GetComponent<Renderer>().bounds.size;
+ //       length = GetComponent<BoxCollider>().size.x;
+ //       spawnSize.x -= length / 2;
+ //       spawnSize.z -= length / 2;
 
         Transform Goal = Swarm.parent.Find("GOAL");
-        GameObject go = Goal.Find("SpawnAreas").gameObject;
-        TargetSpawnAreas = go.GetComponent<SpawnAreas>();
+ //       GameObject go = Goal.Find("SpawnAreas").gameObject;
+ //       TargetSpawnAreas = go.GetComponent<SpawnAreas>();
         Target = Goal.Find("Target");
 
         otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
@@ -78,12 +83,15 @@ public class Test : Agent
             "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
             GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
             "\nRemember you have Communication set to " + useCommunication);
+
+        startTime = System.DateTime.UtcNow;
+        moves = 0;
     }
 
     public void Checkpoint(Checkpoint cp)
     {
         AddReward(checkpointReward);
-        clearedCheckpoints.Add(cp);
+ //       clearedCheckpoints.Add(cp);
     }
 
     void OnCollisionEnter(Collision collision)
@@ -99,33 +107,49 @@ public class Test : Agent
 
     public override void OnEpisodeBegin()
     {
-        foreach (Checkpoint cp in clearedCheckpoints)
-            cp.SetActive(true);
+        //foreach (Checkpoint cp in clearedCheckpoints)
+        //    cp.SetActive(true);
 
-        clearedCheckpoints.Clear();
-        RndSpawn();
-    }
+        //clearedCheckpoints.Clear();
+        ResetPosition();
+        testNumber++;
 
-    private void RndSpawn()
-    {
-        Vector3 rndPosition;
-        do
+        if (testNumber-1 == TargetPositions.Count)
         {
-            rndPosition = new Vector3(
-            Random.value * spawnSize.x - spawnSize.x / 2,
-            initialPosition.y,
-            Random.value * spawnSize.z - spawnSize.z / 2);
+            Application.Quit();
+            UnityEditor.EditorApplication.isPlaying = false;
         }
-        while (!spawnCheck.IsSafePosition(rndPosition, length));
-
-        transform.localPosition = rndPosition;
-
+        
+        startTime = System.DateTime.UtcNow;
+        moves = 0;
     }
+
+    private void ResetPosition()
+    {
+        transform.localPosition = initialPosition;
+    }
+
+    //private void RndSpawn()
+    //{
+    //    Vector3 rndPosition;
+    //    do
+    //    {
+    //        rndPosition = new Vector3(
+    //        Random.value * spawnSize.x - spawnSize.x / 2,
+    //        initialPosition.y,
+    //        Random.value * spawnSize.z - spawnSize.z / 2);
+    //    }
+    //    while (!spawnCheck.IsSafePosition(rndPosition, length));
+
+    //    transform.localPosition = rndPosition;
+
+    //}
 
     private void MoveTarget()
     {
         // Move the target to a new spot
-        Target.localPosition = TargetSpawnAreas.GetRndPosition();
+        if(testNumber - 1 < TargetPositions.Count)
+            Target.localPosition = TargetPositions[testNumber-1];
         reachedGoal = false;
     }
 
@@ -174,14 +198,24 @@ public class Test : Agent
             transform.Rotate(rotation * rotationSensitivity * Vector3.up);
         }
 
-
-
         if (reachedGoal)
         {
+            Debug.Log("Reached Target in test number " + testNumber);
+            System.TimeSpan ts = System.DateTime.UtcNow - startTime;
+            Debug.Log("Time needed to reach: " + (ts.TotalMilliseconds/1000.0f).ToString());
             ReachedTarget();
             return;
         }
 
+        moves++;
+        if(moves >= maxMoves)
+        {
+            System.TimeSpan ts = System.DateTime.UtcNow - startTime;
+            Debug.Log("Failed test number " + testNumber + " after " + (ts.TotalMilliseconds / 1000.0f).ToString() + " seconds");
+            ReachedTarget();
+            return;
+        }
+        
         AddReward(-existenctialPenalty);
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
