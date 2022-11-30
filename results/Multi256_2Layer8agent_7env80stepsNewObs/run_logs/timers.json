@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1669648775",
+        "python_version": "3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "D:\\venv_python\\trainVenv\\Scripts\\mlagents-learn config/OurConfig/multiagent256_2Layers80Steps.yaml --env=36env7raysSpherecastMoreObs256/SwarmRobots --run-id=Multi256_2Layer8agent_7env80stepsNewObs --no-graphics --num-env=5 --force",
+        "mlagents_version": "0.30.0",
+        "mlagents_envs_version": "0.30.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.13.0+cpu",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1669648778"
+    },
+    "total": 2.9078502999999998,
+    "count": 1,
+    "self": 0.35846589999999967,
+    "children": {
+        "run_training.setup": {
+            "total": 0.3782680999999999,
+            "count": 1,
+            "self": 0.3782680999999999
+        },
+        "TrainerController.start_learning": {
+            "total": 2.1711163000000004,
+            "count": 1,
+            "self": 0.00011950000000027217,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 2.1709681000000005,
+                    "count": 1,
+                    "self": 2.1709681000000005
+                },
+                "TrainerController._save_models": {
+                    "total": 2.8699999999659553e-05,
+                    "count": 1,
+                    "self": 2.8699999999659553e-05
+                }
+            }
+        }
+    }
+}

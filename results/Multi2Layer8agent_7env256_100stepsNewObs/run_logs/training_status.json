@@ -1,0 +1,56 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 499976,
+                "file_path": "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-499976.onnx",
+                "reward": null,
+                "creation_time": 1669764411.8401508,
+                "auxillary_file_paths": [
+                    "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-499976.pt"
+                ]
+            },
+            {
+                "steps": 993472,
+                "file_path": "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-993472.onnx",
+                "reward": null,
+                "creation_time": 1669766130.4399347,
+                "auxillary_file_paths": [
+                    "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-993472.pt"
+                ]
+            },
+            {
+                "steps": 999936,
+                "file_path": "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-999936.onnx",
+                "reward": null,
+                "creation_time": 1669801606.5393596,
+                "auxillary_file_paths": [
+                    "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-999936.pt"
+                ]
+            },
+            {
+                "steps": 1122496,
+                "file_path": "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-1122496.onnx",
+                "reward": null,
+                "creation_time": 1669802084.4681842,
+                "auxillary_file_paths": [
+                    "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-1122496.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1122496,
+            "file_path": "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1669802084.4681842,
+            "auxillary_file_paths": [
+                "results\\Multi2Layer8agent_7env256_100stepsNewObs\\WalkerAgentMulti\\WalkerAgentMulti-1122496.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

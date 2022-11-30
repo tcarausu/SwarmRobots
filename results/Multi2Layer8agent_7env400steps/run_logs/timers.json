@@ -1,0 +1,47 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1669645011",
+        "python_version": "3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "D:\\venv_python\\unityVenv\\Scripts\\mlagents-learn config/OurConfig/multiagent128_2Layers.yaml --env=36env7raysSpherecastMoreObs/SwarmRobots --run-id=Multi2Layer8agent_7env400steps --no-graphics --num-env=7",
+        "mlagents_version": "0.29.0",
+        "mlagents_envs_version": "0.29.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.7.1+cu110",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1669645036"
+    },
+    "total": 25.7358689,
+    "count": 1,
+    "self": 10.0075086,
+    "children": {
+        "run_training.setup": {
+            "total": 1.2008628,
+            "count": 1,
+            "self": 1.2008628
+        },
+        "TrainerController.start_learning": {
+            "total": 14.5274975,
+            "count": 1,
+            "self": 0.0003948000000022489,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 14.527089599999998,
+                    "count": 1,
+                    "self": 14.527089599999998
+                },
+                "trainer_threads": {
+                    "total": 1.6000000009341875e-06,
+                    "count": 1,
+                    "self": 1.6000000009341875e-06
+                },
+                "TrainerController._save_models": {
+                    "total": 1.1499999999387e-05,
+                    "count": 1,
+                    "self": 1.1499999999387e-05
+                }
+            }
+        }
+    }
+}

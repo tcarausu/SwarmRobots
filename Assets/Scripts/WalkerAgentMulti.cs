@@ -136,7 +136,7 @@ public class WalkerAgentMulti : Agent
         int obsSize = 0;
         if (useCommunication)
         {
-            obsSize = otherAgents.Count;
+            obsSize = otherAgents.Count + 4; //adding 4 because of the localpos+rotationY
             communicationList = new List<float>(new float[obsSize]);
         }
 
@@ -194,7 +194,9 @@ public class WalkerAgentMulti : Agent
         //sensor.AddObservation(transform.localPosition.x);
         //sensor.AddObservation(transform.localPosition.z);
         // Agent direction (useful to understand ray perception)
-        //sensor.AddObservation(this.transform.rotation.eulerAngles.y);
+        
+        sensor.AddObservation(transform.localPosition);
+        sensor.AddObservation(transform.rotation.eulerAngles.y);
     }
 
     private bool reachedGoal;
