@@ -153,6 +153,7 @@ class DQN(object):
         
         if np.random.uniform() < self.epsilon:
             return self.random_action()
+            print(self.epsilon)
         else:
             action = np.argmax(self.network([s_t]))
 

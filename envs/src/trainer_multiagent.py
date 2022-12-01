@@ -102,10 +102,6 @@ class TrainerMultiAgent:
                 episode_reward[agent_id] = 0
                 episode[agent_id] += 1
 
-                
-
-
-
                 env.reset()
             
             for agent_id in decision_steps:

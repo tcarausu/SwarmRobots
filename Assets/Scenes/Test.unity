@@ -228,8 +228,12 @@ PrefabInstance:
     m_TransformParent: {fileID: 3120759753246790136}
     m_Modifications:
     - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
+      propertyPath: mode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: changePosTarget
-      value: 2000
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2946930486148952314, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: usableTrainingArea
@@ -286,7 +290,7 @@ PrefabInstance:
     - target: {fileID: 4447214788014164748, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_Model
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: be8eef233f5c0554baa59d5a38a88933, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: 89be8b05ac62c6842a9c666709e2244b, type: 3}
     - target: {fileID: 4447214788014164748, guid: da1e82553fde8e144b22ff32f8acfc39, type: 3}
       propertyPath: m_DeterministicInference
       value: 0

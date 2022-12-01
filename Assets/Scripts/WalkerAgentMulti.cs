@@ -292,9 +292,7 @@ public class WalkerAgentMulti : Agent
 
             controller.Move(forwardMovement * playerSpeed * Time.deltaTime * transform.forward);
             transform.Rotate(rotation * rotationSensitivity * Vector3.up);
-        }
-        
-
+        }   
 
         if (reachedGoal)
         {
