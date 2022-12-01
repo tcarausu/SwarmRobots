@@ -9,6 +9,8 @@ from .model import (Actor, Critic)
 from .memory import SequentialMemory
 from .random_process import OrnsteinUhlenbeckProcess
 from .util import *
+from mlagents_envs.environment import ActionTuple
+
 
 import os
 
@@ -17,18 +19,19 @@ import os
 criterion = nn.MSELoss()
 
 class DDPG(object):
-    def __init__(self, nb_states, nb_actions, n_episodes):
+    def __init__(self, nb_states, nb_actions, n_agents, max_iterations):
         
         self.nb_states = nb_states
         self.nb_actions= nb_actions
-        self.n_episodes = n_episodes
+        self.n_agents = n_agents
+        self.max_iterations = max_iterations
 
         self.hidden1 = 512
         self.hidden2 = 512
         self.init_w = 0.003
         self.prate = 0.0001
         self.rate = 0.001
-        self.rmsize = 6000000
+        self.rmsize = 300_000
         self.window_length = 1
         self.ou_theta = 0.15
         self.ou_mu = 0.0
@@ -37,9 +40,9 @@ class DDPG(object):
         self.batch_size =64
         self.tau = 0.001
         self.discount = 0.99
-        self.depsilon = 1.0 / n_episodes
+        self.depsilon = 1.0 / max_iterations
         
-        # Create Actor and Critic Network
+        # Create Actor and Critic Network1\\
         net_cfg = {
             'hidden1':self.hidden1, 
             'hidden2':self.hidden2, 
@@ -60,9 +63,6 @@ class DDPG(object):
         self.memory = SequentialMemory(limit=self.rmsize, window_length=self.window_length)
         self.random_process = OrnsteinUhlenbeckProcess(size=nb_actions, theta=self.ou_theta, mu=self.ou_mu, sigma=self.ou_sigma)
 
-        
-
-        
         self.epsilon = 1.0
         # self.s_t = None # Most recent state
         # self.a_t = None # Most recent action
@@ -71,15 +71,15 @@ class DDPG(object):
         self.recent_state = {}
         self.recent_action = {}
 
-        # 
-        if USE_CUDA: self.cuda()
+        
+        # if USE_CUDA: self.cuda()
 
     def initialize_states_actions(self, decision_steps):
         for agent_id in decision_steps:
             self.recent_state[agent_id] = None
             self.recent_action[agent_id] = None
 
-    def update_policy(self):
+    def update_policy(self, iteration=0):
         # Sample batch
         state_batch, action_batch, reward_batch, \
         next_state_batch, terminal_batch = self.memory.sample_and_split(self.batch_size)
@@ -113,8 +113,6 @@ class DDPG(object):
             self.actor(to_tensor(state_batch))
         ]) #update of the actor
 
-
-
         policy_loss = policy_loss.mean() #TODO understand
         policy_loss.backward()
 
@@ -123,6 +121,9 @@ class DDPG(object):
         # Target update
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
+
+
+        return policy_loss.detach()
 
     def eval(self):
         self.actor.eval()
@@ -141,17 +142,20 @@ class DDPG(object):
             self.memory.append(self.recent_state[agent_id], self.recent_action[agent_id], r_t, done)
             self.update_obs(agent_id,s_t1)
 
-    def random_action(self, num_agents):
-        action = np.random.uniform(-1.,1.,(num_agents,self.nb_actions))
+    def random_action(self):
+        action = np.random.uniform(-1.,1.,(self.n_agents,self.nb_actions))
         # self.a_t = action
         
         self.update_recent_actions(action)
-        return action
+
+        action_tuple = ActionTuple()
+        action_tuple.add_continuous(action.reshape((self.n_agents,self.nb_actions)))
+        return action_tuple
 
     def select_action(self, s_t, decay_epsilon=True):
         
         action = to_numpy(
-            self.actor(to_tensor(np.array([s_t])))
+            self.actor(to_tensor([s_t]))
         ).squeeze(0)
 
         action += self.is_training*max(self.epsilon, 0)*self.random_process.sample()
@@ -159,16 +163,17 @@ class DDPG(object):
         if decay_epsilon:
             self.epsilon -= self.depsilon
 
-        #action = np.clip(action, -1., 1.)
+        action = np.clip(action, -1., 1.)
         
         self.update_recent_actions(action)
 
-        return action
+        action_tuple = ActionTuple()
+        action_tuple.add_continuous(action.reshape((self.n_agents,self.nb_actions)))
+
+        return action_tuple
     
     def update_recent_actions(self, action):
-
         i = 0
-
         for agent_id in self.recent_action:
             self.recent_action[agent_id] = action[i,:]
             i += 1
@@ -180,19 +185,19 @@ class DDPG(object):
     def reset_random_process(self):
         self.random_process.reset_states()
 
-    def load_weights(self, file_to_save,env_name):
+    def load_weights(self, file_to_save,identifier,env_name):
         file_to_save += "//data"
 
         self.actor.load_state_dict(
-            torch.load('{}/actor_{}.pkl'.format(file_to_save,env_name))
+            torch.load('{}/actor_{}.pkl'.format(file_to_save + identifier,env_name))
         )
 
         self.critic.load_state_dict(
-            torch.load('{}/critic_{}.pkl'.format(file_to_save,env_name))
+            torch.load('{}/critic_{}.pkl'.format(file_to_save + identifier,env_name))
         )
 
-    def save_model(self,file_to_save,env):
-        file_to_save += "//data"
+    def save_model(self,file_to_save,identifier,env):
+        file_to_save += "//data" + identifier
         torch.save(
             self.actor.state_dict(),
             '{}/actor_{}.pkl'.format(file_to_save,env)
@@ -201,5 +206,7 @@ class DDPG(object):
             self.critic.state_dict(),
             '{}/critic_{}.pkl'.format(file_to_save,env)
         )
+
+    
     
     

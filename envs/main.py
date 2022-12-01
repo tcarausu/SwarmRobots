@@ -1,21 +1,15 @@
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from src import *
+from src.util import *
+
 import numpy as np
 import os
-import random
 
-def get_worker_id(filename="worker_id.dat"):
-    with open(filename, 'a+') as f:
-        f.seek(0)
-        val = int(f.read() or 0) + 1
-        f.seek(0)
-        f.truncate()
-        f.write(str(val))
-        return val
+
 
 def get_env(file_name, no_graphics):
-    # env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
-    env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
+    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, worker_id=get_worker_id()) 
+    # env = UnityEnvironment(file_name=None, no_graphics=no_graphics, worker_id=0) 
 
     env.reset()
     behavior_name = list(env.behavior_specs)[0]
@@ -28,12 +22,12 @@ def get_env(file_name, no_graphics):
         obs = decision_steps.obs[0]
         return env, obs.shape[0], obs.shape[1]
     
-def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
+def test_ddpg(num_episodes, brain, env, file, env_name, identifier, num_agents):
 
     env.reset()
-    agent.load_weights(file,env_name)
-    agent.is_training = False
-    agent.eval() 
+    brain.load_weights(file,identifier, env_name)
+    brain.is_training = False
+    brain.eval() 
 
     behavior_name = list(env.behavior_specs)[0]
     
@@ -52,11 +46,15 @@ def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
         done = False
 
         while not done:
+
             step += 1
             print(step)
+
             if len(decision_steps) == num_agents:
+
                 action = ActionTuple()
-                movement = agent.select_action(decision_steps.obs, decay_epsilon = False).reshape(num_agents,action_size)
+                movement = brain.select_action(get_unique_obs(decision_steps.obs), decay_epsilon = False).reshape(num_agents,action_size)
+                print(movement)
                 action.add_continuous(movement)
                 env.set_actions(behavior_name, action)
             
@@ -71,59 +69,26 @@ def test_ddpg(num_episodes, agent, env, file, env_name, num_agents):
                 print("Agent: %d, episode: %d : reward: %1.1f" %(agent_name, episode,episode_reward))
                 done = True
 
-            # if step > 100:
-            #     env.reset()
-            #     break
-
-def set_seed():
-    np.random.seed(42)
-    random.seed(42)
 
 
-#----not used right now
-def test_neuro(env, agent, n_layers, n_neurons):
-
-    model = NeuroModel(8, 2,  n_layers, n_neurons)
-    model.set_weights(np.loadtxt("best.dat", dtype=np.float32))
-
-    behavior_name = list(env.behavior_specs)[0]
-    
-    for _ in range(3):
-
-        decision_steps, terminal_steps = env.get_steps(behavior_name)
-
-        agent = decision_steps.agent_id[0]
-        done = False 
-
-        while not done:
-            if len(decision_steps) >= 1:
-                action = ActionTuple()
-                movement = model.forward(decision_steps[agent].obs)
-                print(movement)
-                action.add_continuous(movement)
-                env.set_actions(behavior_name, action)
-            env.step()
-            decision_steps, terminal_steps = env.get_steps(behavior_name)
-            if agent in terminal_steps: 
-                print(terminal_steps[agent].reward)
-                done = True
 
 if __name__ =="__main__":
 
     set_seed()
 
     folder = os.path.dirname(__file__)
-    env_name = "MULTIAGENT"
-    
-    
-    file_name = folder + "/" + env_name  #use this to run the binary file
 
+    env_name = "MULTIAGENT_CONTINOUS"
+    
+    identifier = "//Continuous//"
+    
+    file_name = folder + "//binary//" + env_name    
 
     # -------------------------- HYPERPARAMETERS
     
     action_size = 2
 
-    num_iterations = 1_000_000
+    num_iterations = 1000000
     max_episode_length = 2000
     warmup = 10000 #number of actions to perform randomly before starting to use the policy
     
@@ -136,24 +101,21 @@ if __name__ =="__main__":
     if TRAIN:
         env, number_of_agents, observation_size = get_env(file_name, True)
 
-        trainer = TrainerMultiAgent(observation_size = observation_size, 
-                    action_size = action_size, 
-                    number_of_agents = number_of_agents,
-                    num_iterations=num_iterations
-                    )
+        agent = DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+
+        trainer = TrainerMultiAgent(agent=agent,file_to_save = folder,env_name = env_name,)
                     
-        trainer.train(resume_model = False,
-                      env = env,
-                      file_to_save = folder,
-                      env_name = env_name,
-                      warmup = warmup,
-                      num_agents=number_of_agents)
+        try:
+            trainer.train(resume_model = False, env = env,identifier=identifier, warmup = warmup)
+        except KeyboardInterrupt:
+            trainer.log()
+                      
     else:
         env, number_of_agents, observation_size = get_env(file_name, False)
-        test_ddpg(num_episodes = 10, agent = TrainerMultiAgent(observation_size = observation_size, 
-                                                                action_size = action_size, 
-                                                                number_of_agents = number_of_agents
-                                                                ).agent, env = env, file = folder, env_name = env_name, num_agents=number_of_agents)
+
+        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+
+        test_ddpg(num_episodes = 10, brain = agent, env = env, file = folder, env_name = env_name, identifier = identifier, num_agents=number_of_agents)
 
 
 
@@ -246,8 +208,33 @@ if __name__ =="__main__":
     #     test(env, neuro_agent) 
 
     # -----------------------------------
+    # def test_neuro(env, agent, n_layers, n_neurons):
 
-    
+    #     model = NeuroModel(8, 2,  n_layers, n_neurons)
+    #     model.set_weights(np.loadtxt("best.dat", dtype=np.float32))
+
+    #     behavior_name = list(env.behavior_specs)[0]
+        
+    #     for _ in range(3):
+
+    #         decision_steps, terminal_steps = env.get_steps(behavior_name)
+
+    #         agent = decision_steps.agent_id[0]
+    #         done = False 
+
+    #         while not done:
+    #             if len(decision_steps) >= 1:
+    #                 action = ActionTuple()
+    #                 movement = model.forward(decision_steps[agent].obs)
+    #                 print(movement)
+    #                 action.add_continuous(movement)
+    #                 env.set_actions(behavior_name, action)
+    #             env.step()
+    #             decision_steps, terminal_steps = env.get_steps(behavior_name)
+    #             if agent in terminal_steps: 
+    #                 print(terminal_steps[agent].reward)
+    #                 done = True
+        
 
 
 
@@ -260,4 +247,4 @@ if __name__ =="__main__":
 
 
 
-    
+        
