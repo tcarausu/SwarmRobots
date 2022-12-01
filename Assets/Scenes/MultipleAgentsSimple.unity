@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028334, g: 0.2257134, b: 0.30692226, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -180,18 +180,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2462207346101534716, guid: a9faaa459a52e894b891766f196dec50, type: 3}
       propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2690702982423019310, guid: a9faaa459a52e894b891766f196dec50, type: 3}
-      propertyPath: m_RaysPerDirection
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 2690702982423019310, guid: a9faaa459a52e894b891766f196dec50, type: 3}
-      propertyPath: m_ObservationStacks
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 7206435739739737651, guid: a9faaa459a52e894b891766f196dec50, type: 3}
-      propertyPath: m_BrainParameters.NumStackedVectorObservations
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -443,27 +431,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1140246473 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 550520129096553799, guid: a9faaa459a52e894b891766f196dec50, type: 3}
-  m_PrefabInstance: {fileID: 123896491}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1140246483
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1140246473}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2902496c0120472b90269f94a0aec7e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Record: 0
-  NumStepsToRecord: 0
-  DemonstrationName: 
-  DemonstrationDirectory: 
 --- !u!1001 &1393416292
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -644,10 +611,6 @@ PrefabInstance:
     - target: {fileID: 2462207346101534716, guid: a9faaa459a52e894b891766f196dec50, type: 3}
       propertyPath: m_IsActive
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7206435739739737651, guid: a9faaa459a52e894b891766f196dec50, type: 3}
-      propertyPath: m_BrainParameters.VectorObservationSize
-      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a9faaa459a52e894b891766f196dec50, type: 3}
