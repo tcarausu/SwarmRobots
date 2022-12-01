@@ -96,7 +96,7 @@ class TrainerMultiAgent:
                 print('Agent {}, #{}: episode_reward:{} episode steps:{}'.format(agent_id, episode[agent_id],episode_reward[agent_id],episode_steps[agent_id]))
 
 
-                log_episodes.append([{"agent" : agent_id}, {"episode_reward" : episode_reward[agent_id]}, {"episode_steps" : episode_steps[agent_id]}])
+                self.log_episodes.append([{"agent" : agent_id}, {"episode_reward" : episode_reward[agent_id]}, {"episode_steps" : episode_steps[agent_id]}])
 
                 episode_steps[agent_id] = 0
                 episode_reward[agent_id] = 0
@@ -123,14 +123,14 @@ class TrainerMultiAgent:
 
             if step > warmup :
                 loss = self.agent.update_policy(step)
-                log_policy_losses.append(loss.item())
+                self.log_policy_losses.append(loss.item())
                 if step % 100 == 0:
                     print(f"Step number {step}, saving_model")
                     self.agent.save_model(self.file_to_save, identifier, self.env_name)
 
             step += 1
 
-        self.log()    
+        self.log()   
             
         # print(episode)
         # print(episode_reward)

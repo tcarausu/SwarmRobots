@@ -86,11 +86,11 @@ if __name__ =="__main__":
 
     # -------------------------- HYPERPARAMETERS
     
-    action_size = 2
+    action_size = 7
 
-    num_iterations = 200_000
+    num_iterations = 
     max_episode_length = 2000
-    warmup = 1000 #number of actions to perform randomly before starting to use the policy
+    warmup = 1 #number of actions to perform randomly before starting to use the policy
     
     
     # -------------------------- 
@@ -101,7 +101,7 @@ if __name__ =="__main__":
     if TRAIN:
         env, number_of_agents, observation_size = get_env(file_name, True)
 
-        agent = DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
 
         trainer = TrainerMultiAgent(agent=agent,file_to_save = folder,env_name = env_name,)
                     
@@ -113,7 +113,7 @@ if __name__ =="__main__":
     else:
         env, number_of_agents, observation_size = get_env(file_name, False)
 
-        agent = DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
 
         test_ddpg(num_episodes = 10, brain = agent, env = env, file = folder, env_name = env_name, identifier = identifier, num_agents=number_of_agents)
 
