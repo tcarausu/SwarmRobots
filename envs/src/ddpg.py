@@ -9,6 +9,8 @@ from .model import (Actor, Critic)
 from .memory import SequentialMemory
 from .random_process import OrnsteinUhlenbeckProcess
 from .util import *
+from mlagents_envs.environment import ActionTuple
+
 
 import os
 
@@ -17,11 +19,12 @@ import os
 criterion = nn.MSELoss()
 
 class DDPG(object):
-    def __init__(self, nb_states, nb_actions, n_episodes):
+    def __init__(self, nb_states, nb_actions, n_agents, max_iterations):
         
         self.nb_states = nb_states
         self.nb_actions= nb_actions
-        self.n_episodes = n_episodes
+        self.n_agents = n_agents
+        self.max_iterations = max_iterations
 
         self.hidden1 = 512
         self.hidden2 = 512
@@ -37,7 +40,7 @@ class DDPG(object):
         self.batch_size =64
         self.tau = 0.001
         self.discount = 0.99
-        self.depsilon = 1.0 / n_episodes
+        self.depsilon = 1.0 / max_iterations
         
         # Create Actor and Critic Network1\\
         net_cfg = {
@@ -69,14 +72,14 @@ class DDPG(object):
         self.recent_action = {}
 
         
-        if USE_CUDA: self.cuda()
+        # if USE_CUDA: self.cuda()
 
     def initialize_states_actions(self, decision_steps):
         for agent_id in decision_steps:
             self.recent_state[agent_id] = None
             self.recent_action[agent_id] = None
 
-    def update_policy(self):
+    def update_policy(self, iteration=0):
         # Sample batch
         state_batch, action_batch, reward_batch, \
         next_state_batch, terminal_batch = self.memory.sample_and_split(self.batch_size)
@@ -119,6 +122,9 @@ class DDPG(object):
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
 
+
+        return policy_loss.detach()
+
     def eval(self):
         self.actor.eval()
         self.actor_target.eval()
@@ -136,12 +142,15 @@ class DDPG(object):
             self.memory.append(self.recent_state[agent_id], self.recent_action[agent_id], r_t, done)
             self.update_obs(agent_id,s_t1)
 
-    def random_action(self, num_agents):
-        action = np.random.uniform(-1.,1.,(num_agents,self.nb_actions))
+    def random_action(self):
+        action = np.random.uniform(-1.,1.,(self.n_agents,self.nb_actions))
         # self.a_t = action
         
         self.update_recent_actions(action)
-        return action
+
+        action_tuple = ActionTuple()
+        action_tuple.add_continuous(action.reshape((self.n_agents,self.nb_actions)))
+        return action_tuple
 
     def select_action(self, s_t, decay_epsilon=True):
         
@@ -158,7 +167,10 @@ class DDPG(object):
         
         self.update_recent_actions(action)
 
-        return action
+        action_tuple = ActionTuple()
+        action_tuple.add_continuous(action.reshape((self.n_agents,self.nb_actions)))
+
+        return action_tuple
     
     def update_recent_actions(self, action):
         i = 0
@@ -194,5 +206,7 @@ class DDPG(object):
             self.critic.state_dict(),
             '{}/critic_{}.pkl'.format(file_to_save,env)
         )
+
+    
     
     
