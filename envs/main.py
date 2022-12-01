@@ -78,7 +78,7 @@ if __name__ =="__main__":
 
     folder = os.path.dirname(__file__)
 
-    env_name = "MULTIAGENT_CONTINOUS"
+    env_name = "MULTIAGENT_CONTINUOUS6agents"
     
     identifier = "//Continuous//"
     
@@ -88,7 +88,7 @@ if __name__ =="__main__":
     
     action_size = 2
 
-    num_iterations = 1000000
+    num_iterations = 1_000_000
     max_episode_length = 2000
     warmup = 10000 #number of actions to perform randomly before starting to use the policy
     
@@ -99,7 +99,7 @@ if __name__ =="__main__":
 
     
     if TRAIN:
-        env, number_of_agents, observation_size = get_env(file_name, True)
+        env, number_of_agents, observation_size = get_env(file_name, False)
 
         agent = DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
 
