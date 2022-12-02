@@ -1,0 +1,29 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 184952,
+                "file_path": "results\\Multi2Layer8agent_7env40steps\\WalkerAgentMulti\\WalkerAgentMulti-184952.onnx",
+                "reward": null,
+                "creation_time": 1669645574.1396463,
+                "auxillary_file_paths": [
+                    "results\\Multi2Layer8agent_7env40steps\\WalkerAgentMulti\\WalkerAgentMulti-184952.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 184952,
+            "file_path": "results\\Multi2Layer8agent_7env40steps\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1669645574.1396463,
+            "auxillary_file_paths": [
+                "results\\Multi2Layer8agent_7env40steps\\WalkerAgentMulti\\WalkerAgentMulti-184952.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}
