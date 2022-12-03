@@ -34,15 +34,20 @@ public class WalkerAgentMulti : Agent
         TargetPosition
     }
 
-    public Communication CommunicationMode;
+    public List<Communication> CommunicationMode;
     public Movement movementMode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
+    public bool ownPositionAsObservation;
 
+    private int numTargetsFound = 0;
+    [Tooltip("This number represents the number of episodes that the target mantain his starting position")]
+    public int firstChangeTargetPos = 10;
+
+    [Header("Rewards")]
     public float existenctialPenalty = 0.001f;
 
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
-    [Header("Inversely proportional to distance")]
     public float nearAgentPenalty = 0.1f;
 
     public float hitWallPenalty = 0.05f;
@@ -59,10 +64,6 @@ public class WalkerAgentMulti : Agent
     private Transform Target;
     private SpawnAreas TargetSpawnAreas;
 
-    private int numTargetsFound = 0;
-    [Tooltip("This number represents the number of episodes that the target mantain his starting position")]
-    public int firstChangeTargetPos = 10;
-
     private CharacterController controller;
 
     private List<Checkpoint> clearedCheckpoints;
@@ -73,11 +74,14 @@ public class WalkerAgentMulti : Agent
     private Vector3 spawnSize;
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
 
-    public GameObject usableTrainingArea;
+    [Header("The area in which the agent is located")]
+    public GameObject TrainingArea;
+    [Tooltip("Set this to true if the area of the agent can change maze")]
+    public bool hasRandomMaze;
     private Transform _activeMaze;
     private Transform Goal;
 
-    public bool hasRandomMaze;
+
 
     void Start()
     {
@@ -96,11 +100,11 @@ public class WalkerAgentMulti : Agent
         if (hasRandomMaze)
         {
             //getting the objectList of Mazes
-            _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            _activeMaze = TrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
             Goal = _activeMaze.Find("GOAL");
         }
         else
-            Goal = usableTrainingArea.transform.Find("GOAL");
+            Goal = TrainingArea.transform.Find("GOAL");
 
         TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
         Target = Goal.Find("Target");
@@ -109,23 +113,29 @@ public class WalkerAgentMulti : Agent
         otherAgents.Remove(this);
 
         int obsSize = 0;
+        communicationMap = new Dictionary<string, float>();
         //Initialize the communication data structure
-        if (CommunicationMode.Equals(Communication.Distance) || CommunicationMode.Equals(Communication.FreeCommunication))
+        if (CommunicationMode.Contains(Communication.Distance))
         {
-            obsSize = otherAgents.Count;
-            communicationMap = new Dictionary<string, float>();
+            obsSize += otherAgents.Count;
             foreach (var agent in otherAgents)
-                communicationMap.Add(agent.name, 0);
+                communicationMap.Add(agent.name + "distance", 0);
         }
-        else if (CommunicationMode.Equals(Communication.TargetPosition))
+        if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
-            obsSize = 2;
-            communicationMap = new Dictionary<string, float>
-            {
-                { "targetx", 0 },
-                { "targety", 0 }
-            };
+            obsSize += otherAgents.Count;
+            foreach (var agent in otherAgents)
+                communicationMap.Add(agent.name + "freeCommunication", 0);
         }
+        if (CommunicationMode.Contains(Communication.TargetPosition))
+        {
+            obsSize += 2;
+            communicationMap.Add("targetx", 0);
+            communicationMap.Add("targetz", 0);
+        }
+
+        if (ownPositionAsObservation)
+            obsSize += 2;
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -179,21 +189,27 @@ public class WalkerAgentMulti : Agent
         Target.localPosition = TargetSpawnAreas.GetRndPosition();
     }
 
-    public void Communicate(string agentName, float message)
+    public void Communicate(string id, float message)
     {
-        communicationMap[agentName] = message;
+        communicationMap[id] = message;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        if (CommunicationMode.Equals(Communication.Distance))
+        if (CommunicationMode.Contains(Communication.Distance))
             CheckNearAgentsAndUpdateCommunication();
         else
             CheckNearAgents();
 
         //The only observation is the raycast if communication is not used
-        if (!CommunicationMode.Equals(Communication.Absent))
+        if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
+
+        if (ownPositionAsObservation)
+        {
+            sensor.AddObservation(transform.localPosition.x);
+            sensor.AddObservation(transform.localPosition.z);
+        }
     }
 
     private void CommunicateTargetPosition()
@@ -283,7 +299,7 @@ public class WalkerAgentMulti : Agent
             foreach (WalkerAgentMulti agent in otherAgents)
             {
                 float message = actionBuffers.ContinuousActions[messageIndex];
-                agent.Communicate(name, message);
+                agent.Communicate(name + "freeCommunication", message);
             }
         }
     }
@@ -322,7 +338,7 @@ public class WalkerAgentMulti : Agent
 
         if (hasRandomMaze)
         {
-            _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            _activeMaze = TrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
             Goal = _activeMaze.Find("GOAL");
             TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
             Target = Goal.Find("Target");
@@ -356,10 +372,10 @@ public class WalkerAgentMulti : Agent
                 if (hit.collider.name.Equals(agent.name))
                 {
                     AddReward(-(1 / hit.distance) * nearAgentPenalty);
-                    communicationMap[agent.name] = hit.distance;
+                    communicationMap[agent.name + "distance"] = hit.distance;
                 }
                 else
-                    communicationMap[agent.name] = 0;
+                    communicationMap[agent.name + "distance"] = 0;
             }
         }
     }
@@ -387,8 +403,6 @@ public class WalkerAgentMulti : Agent
                 continuousActionsOut[1] = Input.GetAxis("Vertical");
                 break;
         }
-
-
 
         if (CommunicationMode.Equals(Communication.FreeCommunication))
             continuousActionsOut[continuousActionsOut.Length-1] = 0;
