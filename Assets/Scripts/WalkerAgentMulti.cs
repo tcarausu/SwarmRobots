@@ -1,19 +1,41 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 
+enum DiscreteCommands
+{
+    None,
+    Forward,
+    Backward,
+    TurnLeft,
+    TurnRight,
+    Left,
+    Right,
+}
+
 public class WalkerAgentMulti : Agent
 {
     public enum Movement
     {
-        UpAndRight,
-        ForwardAndRotate
+        NSWE,
+        ForwardAndRotate,
+        DiscreteActions
     }
 
-    public Movement mode;
+    public enum Communication
+    {
+        Absent,
+        Distance,
+        FreeCommunication,
+        TargetPosition
+    }
+
+    public Communication CommunicationMode;
+    public Movement movementMode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
 
@@ -30,15 +52,16 @@ public class WalkerAgentMulti : Agent
     public float targetReward = 1;
     public float nearTargetReward = 0.01f;
 
-    // Retrieved from the training area, remember to set the observation size correctly in the prefab
-    public bool useCommunication;
-
-    private List<float> communicationList;
+    private Dictionary<string, float> communicationMap;
 
     private Transform Swarm;
     private List<WalkerAgentMulti> otherAgents;
     private Transform Target;
     private SpawnAreas TargetSpawnAreas;
+
+    private int numTargetsFound = 0;
+    [Tooltip("This number represents the number of episodes that the target mantain his starting position")]
+    public int firstChangeTargetPos = 10;
 
     private CharacterController controller;
 
@@ -71,9 +94,44 @@ public class WalkerAgentMulti : Agent
         spawnSize.z -= length / 2;
 
         if (hasRandomMaze)
-            activateTheMaze();
+        {
+            //getting the objectList of Mazes
+            _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            Goal = _activeMaze.Find("GOAL");
+        }
         else
-            useExisitingMaze();
+            Goal = usableTrainingArea.transform.Find("GOAL");
+
+        TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
+        Target = Goal.Find("Target");
+
+        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
+        otherAgents.Remove(this);
+
+        int obsSize = 0;
+        //Initialize the communication data structure
+        if (CommunicationMode.Equals(Communication.Distance) || CommunicationMode.Equals(Communication.FreeCommunication))
+        {
+            obsSize = otherAgents.Count;
+            communicationMap = new Dictionary<string, float>();
+            foreach (var agent in otherAgents)
+                communicationMap.Add(agent.name, 0);
+        }
+        else if (CommunicationMode.Equals(Communication.TargetPosition))
+        {
+            obsSize = 2;
+            communicationMap = new Dictionary<string, float>
+            {
+                { "targetx", 0 },
+                { "targety", 0 }
+            };
+        }
+
+        // Since I can't set the size from here I just notify the user
+        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
+        "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
+        GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
+        "\nRemember you have Communication set to " + CommunicationMode.ToString());
     }
 
     public void Checkpoint(Checkpoint cp)
@@ -91,60 +149,6 @@ public class WalkerAgentMulti : Agent
         // Hit with another agent
         else if (go.CompareTag("agent") && !go.Equals(gameObject))
             AddReward(-hitAgentPenalty);
-    }
-
-
-    private void useExisitingMaze()
-    {
-        Goal = usableTrainingArea.transform.Find("GOAL");
-        // Transform Goal = Swarm.parent.Find("GOAL");
-        TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
-        Target = Goal.Find("Target");
-
-        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
-        otherAgents.Remove(this);
-
-        // Compute observation size based on the useCommunication parameter
-        int obsSize = 0;
-        if (useCommunication)
-        {
-            obsSize = otherAgents.Count;
-            communicationList = new List<float>(new float[obsSize]);
-        }
-
-        // Since I can't set the size from here I just notify the user
-        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
-            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
-            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
-            "\nRemember you have Communication set to " + useCommunication);
-    }
-
-    private void activateTheMaze()
-    {
-        //getting the objectList of Mazes
-        _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
-
-        Goal = _activeMaze.Find("GOAL");
-        // Transform Goal = Swarm.parent.Find("GOAL");
-        TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
-        Target = Goal.Find("Target");
-
-        otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
-        otherAgents.Remove(this);
-
-        // Compute observation size based on the useCommunication parameter
-        int obsSize = 0;
-        if (useCommunication)
-        {
-            obsSize = otherAgents.Count;
-            communicationList = new List<float>(new float[obsSize]);
-        }
-
-        // Since I can't set the size from here I just notify the user
-        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
-            "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
-            GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
-            "\nRemember you have Communication set to " + useCommunication);
     }
 
     public override void OnEpisodeBegin()
@@ -172,29 +176,33 @@ public class WalkerAgentMulti : Agent
 
     private void MoveTarget()
     {
-        // Move the target to a new spot
         Target.localPosition = TargetSpawnAreas.GetRndPosition();
-        reachedGoal = false;
+    }
+
+    public void Communicate(string agentName, float message)
+    {
+        communicationMap[agentName] = message;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        //The only observation is the raycast if communication is not used
-        if (useCommunication)
-        {
+        if (CommunicationMode.Equals(Communication.Distance))
             CheckNearAgentsAndUpdateCommunication();
-            sensor.AddObservation(communicationList);
-        }
         else
             CheckNearAgents();
 
-        // Target and Agent positions
-        //sensor.AddObservation(Target.localPosition.x);
-        //sensor.AddObservation(Target.localPosition.z);
-        //sensor.AddObservation(transform.localPosition.x);
-        //sensor.AddObservation(transform.localPosition.z);
-        // Agent direction (useful to understand ray perception)
-        //sensor.AddObservation(this.transform.rotation.eulerAngles.y);
+        //The only observation is the raycast if communication is not used
+        if (!CommunicationMode.Equals(Communication.Absent))
+            sensor.AddObservation(communicationMap.Values.ToList());
+    }
+
+    private void CommunicateTargetPosition()
+    {
+        foreach (WalkerAgentMulti agent in otherAgents)
+        {
+            agent.Communicate("targetx", Target.localPosition.x);
+            agent.Communicate("targetz", Target.localPosition.z);
+        }
     }
 
     private bool reachedGoal;
@@ -206,23 +214,56 @@ public class WalkerAgentMulti : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        if (mode.Equals(Movement.UpAndRight))
+        switch (movementMode)
         {
-            Vector3 direction = Vector3.zero;
-            direction.x = actionBuffers.ContinuousActions[0];
-            direction.z = actionBuffers.ContinuousActions[1];
+            case Movement.NSWE:
+                Vector3 direction = Vector3.zero;
+                direction.x = actionBuffers.ContinuousActions[0];
+                direction.z = actionBuffers.ContinuousActions[1];
 
-            controller.Move(playerSpeed * Time.deltaTime * direction);
-            if (direction != Vector3.zero)
-                transform.forward = direction;
-        }
-        else if (mode.Equals(Movement.ForwardAndRotate))
-        {
-            var rotation = actionBuffers.ContinuousActions[0];
-            var forwardMovement = actionBuffers.ContinuousActions[1];
+                controller.Move(playerSpeed * Time.deltaTime * direction);
+                if (direction != Vector3.zero)
+                    transform.forward = direction;
+                break;
 
-            controller.Move(forwardMovement * playerSpeed * Time.deltaTime * transform.forward);
-            transform.Rotate(rotation * rotationSensitivity * Vector3.up);
+            case Movement.ForwardAndRotate:
+                var rotation = actionBuffers.ContinuousActions[0];
+                var forwardMovement = actionBuffers.ContinuousActions[1];
+
+                controller.Move(forwardMovement * playerSpeed * Time.deltaTime * transform.forward);
+                transform.Rotate(rotation * rotationSensitivity * Vector3.up);
+                break;
+
+            case Movement.DiscreteActions:
+                var dirToGo = Vector3.zero;
+                var rotateDir = Vector3.zero;
+
+                var action = actionBuffers.DiscreteActions[0];
+
+                switch (action)
+                {
+                    case (int)DiscreteCommands.Forward:
+                        dirToGo = transform.forward * 1f;
+                        break;
+                    case (int)DiscreteCommands.Backward:
+                        dirToGo = transform.forward * -1f;
+                        break;
+                    case (int)DiscreteCommands.TurnLeft:
+                        rotateDir = transform.up * 1f;
+                        break;
+                    case (int)DiscreteCommands.TurnRight:
+                        rotateDir = transform.up * -1f;
+                        break;
+                    case (int)DiscreteCommands.Left:
+                        dirToGo = transform.right * -0.75f;
+                        break;
+                    case (int)DiscreteCommands.Right:
+                        dirToGo = transform.right * 0.75f;
+                        break;
+                }
+                transform.Rotate(rotateDir * rotationSensitivity);
+                controller.Move(playerSpeed * Time.deltaTime * dirToGo);
+                break;
         }
 
 
@@ -233,10 +274,30 @@ public class WalkerAgentMulti : Agent
         }
 
         AddReward(-existenctialPenalty);
+
+        CheckTargetProximity();
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        {
+            int messageIndex = actionBuffers.ContinuousActions.Length - 1;
+            foreach (WalkerAgentMulti agent in otherAgents)
+            {
+                float message = actionBuffers.ContinuousActions[messageIndex];
+                agent.Communicate(name, message);
+            }
+        }
+    }
+
+    private void CheckTargetProximity()
+    {
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
             if (hit.collider.name.Equals(Target.name))
+            {
                 AddReward((1 / hit.distance) * nearTargetReward);
+                if (CommunicationMode.Equals(Communication.TargetPosition))
+                    CommunicateTargetPosition();
+            }
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
@@ -244,16 +305,29 @@ public class WalkerAgentMulti : Agent
     {
         SetReward(targetReward);
         EndEpisode();
+        numTargetsFound++;
+
         foreach (WalkerAgentMulti agent in otherAgents)
         {
+            agent.numTargetsFound++;
             agent.SetReward(targetReward);
             agent.EndEpisode();
         }
 
+        reachedGoal = false;
+
+        // Radomize the maze and target only after "firstChangeTargetPos" number of episodes
+        if (numTargetsFound < firstChangeTargetPos)
+            return;
+
         if (hasRandomMaze)
-            activateTheMaze();
-        else
-            useExisitingMaze();
+        {
+            _activeMaze = usableTrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            Goal = _activeMaze.Find("GOAL");
+            TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
+            Target = Goal.Find("Target");
+        }
+
         MoveTarget();
     }
 
@@ -261,7 +335,7 @@ public class WalkerAgentMulti : Agent
     private void CheckNearAgents()
     {
         Vector3 dir;
-        foreach (Agent agent in otherAgents)
+        foreach (WalkerAgentMulti agent in otherAgents)
         {
             dir = (agent.transform.position - transform.position).normalized;
             if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
@@ -274,7 +348,6 @@ public class WalkerAgentMulti : Agent
     private void CheckNearAgentsAndUpdateCommunication()
     {
         Vector3 dir;
-        communicationList.Clear();
         foreach (Agent agent in otherAgents)
         {
             dir = (agent.transform.position - transform.position).normalized;
@@ -283,18 +356,41 @@ public class WalkerAgentMulti : Agent
                 if (hit.collider.name.Equals(agent.name))
                 {
                     AddReward(-(1 / hit.distance) * nearAgentPenalty);
-                    communicationList.Add(hit.distance);
+                    communicationMap[agent.name] = hit.distance;
                 }
                 else
-                    communicationList.Add(0);
+                    communicationMap[agent.name] = 0;
             }
         }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
+        var discreteActionsOut = actionsOut.DiscreteActions;
         var continuousActionsOut = actionsOut.ContinuousActions;
-        continuousActionsOut[0] = Input.GetAxis("Horizontal");
-        continuousActionsOut[1] = Input.GetAxis("Vertical");
+        switch (movementMode)
+        {
+            case Movement.DiscreteActions:
+                if (Input.GetKey(KeyCode.D))
+                    discreteActionsOut[0] = (int)DiscreteCommands.Right;
+                else if (Input.GetKey(KeyCode.W))
+                    discreteActionsOut[0] = (int)DiscreteCommands.Forward;
+                else if (Input.GetKey(KeyCode.A))
+                    discreteActionsOut[0] = (int)DiscreteCommands.Left;
+                else if (Input.GetKey(KeyCode.S))
+                    discreteActionsOut[0] = (int)DiscreteCommands.Backward;
+                break;
+
+            default:
+                continuousActionsOut = actionsOut.ContinuousActions;
+                continuousActionsOut[0] = Input.GetAxis("Horizontal");
+                continuousActionsOut[1] = Input.GetAxis("Vertical");
+                break;
+        }
+
+
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+            continuousActionsOut[continuousActionsOut.Length-1] = 0;
     }
 }

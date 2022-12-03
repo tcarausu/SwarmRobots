@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
@@ -8,8 +9,21 @@ using Random = UnityEngine.Random;
 
 public class Test : Agent
 {
-    public enum Movement { UpAndRight, ForwardAndRotate }
-    public Movement mode;
+    public enum Movement
+    {
+        NSWE,
+        ForwardAndRotate
+    }
+
+    public enum Communication
+    {
+        Absent,
+        Distance,
+        FreeCommunication
+    }
+
+    public Communication CommunicationMode;
+    public Movement movementMode;
     public float playerSpeed = 20;
     public float rotationSensitivity = 10;
 
@@ -26,6 +40,7 @@ public class Test : Agent
 
     public bool useCommunication;
     private List<float> communicationList;
+    private Dictionary<string, float> communicationMap;
 
     private Transform Swarm;
     private List<Test> otherAgents;
@@ -78,11 +93,24 @@ public class Test : Agent
             communicationList = new List<float>(new float[(int)(obsSize)]);
         }
 
-        // Since I can't set the size from here I just notify the user
-        Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        {
+            communicationMap = new Dictionary<string, float>();
+            foreach (var agent in otherAgents)
+            {
+                communicationMap.Add(agent.name, 0);
+            }
+        }
+
+        if (CommunicationMode.Equals(Communication.Distance) || CommunicationMode.Equals(Communication.Absent))
+        {
+            // Since I can't set the size from here I just notify the user
+            Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
             "Wrong observation size, change it from the prefab of the Agent. Actual value = " +
             GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
             "\nRemember you have Communication set to " + useCommunication);
+        }
 
         startTime = System.DateTime.UtcNow;
         moves = 0;
@@ -153,6 +181,11 @@ public class Test : Agent
         reachedGoal = false;
     }
 
+    public void Communicate(string agentName, float message)
+    {
+        communicationMap[agentName] = message;
+    }
+
     public override void CollectObservations(VectorSensor sensor)
     {
 
@@ -164,6 +197,11 @@ public class Test : Agent
         }
         else
             CheckNearAgents();
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        {
+            sensor.AddObservation(communicationMap.Values.ToList());
+        }
 
         // Target and Agent positions
         //sensor.AddObservation(Target.localPosition.x);
@@ -179,7 +217,7 @@ public class Test : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        if (mode.Equals(Movement.UpAndRight))
+        if (movementMode.Equals(Movement.NSWE))
         {
             Vector3 direction = Vector3.zero;
             direction.x = actionBuffers.ContinuousActions[0];
@@ -189,7 +227,7 @@ public class Test : Agent
             if (direction != Vector3.zero)
                 transform.forward = direction;
         }
-        else if (mode.Equals(Movement.ForwardAndRotate))
+        else if (movementMode.Equals(Movement.ForwardAndRotate))
         {
             var rotation = actionBuffers.ContinuousActions[0];
             var forwardMovement = actionBuffers.ContinuousActions[1];
@@ -215,12 +253,21 @@ public class Test : Agent
             ReachedTarget();
             return;
         }
-        
-        AddReward(-existenctialPenalty);
-        Vector3 dir = (Target.position - transform.position).normalized;
-        if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
-            if (hit.collider.name.Equals(Target.name))
-                AddReward((1 / hit.distance) * nearTargetReward);
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        {
+            foreach (Test agent in otherAgents)
+            {
+                float message = actionBuffers.ContinuousActions[2];
+                agent.Communicate(name, message);
+            }
+        }
+
+        //AddReward(-existenctialPenalty);
+        //Vector3 dir = (Target.position - transform.position).normalized;
+        //if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
+        //    if (hit.collider.name.Equals(Target.name))
+        //        AddReward((1 / hit.distance) * nearTargetReward);
 
     }
 
@@ -277,5 +324,8 @@ public class Test : Agent
         var continuousActionsOut = actionsOut.ContinuousActions;
         continuousActionsOut[0] = Input.GetAxis("Horizontal");
         continuousActionsOut[1] = Input.GetAxis("Vertical");
+
+        if (CommunicationMode.Equals(Communication.FreeCommunication))
+            continuousActionsOut[2] = 0;
     }
 }
