@@ -146,7 +146,7 @@ public class Test : Agent
         if (testNumber - 1 == TargetPositions.Count)
         {
             Application.Quit();
-            UnityEditor.EditorApplication.isPlaying = false;
+            // UnityEditor.EditorApplication.isPlaying = false;
         }
 
         startTime = System.DateTime.UtcNow;
