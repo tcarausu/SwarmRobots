@@ -12,9 +12,6 @@ from .util import *
 from mlagents_envs.environment import ActionTuple
 
 
-import os
-
-# from ipdb import set_trace as debug
 
 criterion = nn.MSELoss()
 
@@ -56,7 +53,7 @@ class DDPG(object):
         self.critic_target = Critic(self.nb_states, self.nb_actions, **net_cfg)
         self.critic_optim  = Adam(self.critic.parameters(), lr=self.rate)
 
-        hard_update(self.actor_target, self.actor) # Make sure target is with the same weight
+        hard_update(self.actor_target, self.actor) 
         hard_update(self.critic_target, self.critic)
         
         #Create replay buffer
@@ -64,8 +61,6 @@ class DDPG(object):
         self.random_process = OrnsteinUhlenbeckProcess(size=nb_actions, theta=self.ou_theta, mu=self.ou_mu, sigma=self.ou_sigma)
 
         self.epsilon = 1.0
-        # self.s_t = None # Most recent state
-        # self.a_t = None # Most recent action
         self.is_training = True
 
         self.recent_state = {}
@@ -152,7 +147,7 @@ class DDPG(object):
         action_tuple.add_continuous(action.reshape((self.n_agents,self.nb_actions)))
         return action_tuple
 
-    def select_action(self, s_t, decay_epsilon=True):
+    def select_action(self, s_t):
         
         action = to_numpy(
             self.actor(to_tensor([s_t]))
@@ -160,8 +155,8 @@ class DDPG(object):
 
         action += self.is_training*max(self.epsilon, 0)*self.random_process.sample()
         
-        if decay_epsilon:
-            self.epsilon -= self.depsilon
+        
+        self.epsilon -= self.depsilon
 
         action = np.clip(action, -1., 1.)
         
@@ -186,25 +181,25 @@ class DDPG(object):
         self.random_process.reset_states()
 
     def load_weights(self, file_to_save,identifier,env_name):
-        file_to_save += "//data"
+        file_to_save += "//data" + identifier
 
         self.actor.load_state_dict(
-            torch.load('{}/actor_{}.pkl'.format(file_to_save + identifier,env_name))
+            torch.load('{}/actor_{}.pkl'.format(file_to_save, env_name))
         )
 
         self.critic.load_state_dict(
-            torch.load('{}/critic_{}.pkl'.format(file_to_save + identifier,env_name))
+            torch.load('{}/critic_{}.pkl'.format(file_to_save, env_name))
         )
 
-    def save_model(self,file_to_save,identifier,env):
+    def save_model(self,file_to_save,identifier,env, step):
         file_to_save += "//data" + identifier
         torch.save(
             self.actor.state_dict(),
-            '{}/actor_{}.pkl'.format(file_to_save,env)
+            '{}/actor_{}_{}.pkl'.format(file_to_save,env, step)
         )
         torch.save(
             self.critic.state_dict(),
-            '{}/critic_{}.pkl'.format(file_to_save,env)
+            '{}/critic_{}_{}.pkl'.format(file_to_save,env,step)
         )
 
     

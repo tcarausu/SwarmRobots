@@ -157,7 +157,7 @@ public class WalkerAgentMulti : Agent
         int obsSize = 0;
         if (useCommunication)
         {
-            obsSize = otherAgents.Count + 2;
+            obsSize = otherAgents.Count + 4;
             communicationList = new List<float>(new float[obsSize]);
         }
 

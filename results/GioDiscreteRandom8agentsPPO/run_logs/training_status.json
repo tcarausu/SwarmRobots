@@ -1,0 +1,38 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 499984,
+                "file_path": "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti\\WalkerAgentMulti-499984.onnx",
+                "reward": null,
+                "creation_time": 1670015702.5944507,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti\\WalkerAgentMulti-499984.pt"
+                ]
+            },
+            {
+                "steps": 720592,
+                "file_path": "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti\\WalkerAgentMulti-720592.onnx",
+                "reward": null,
+                "creation_time": 1670017167.0899127,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti\\WalkerAgentMulti-720592.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 720592,
+            "file_path": "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1670017167.0899127,
+            "auxillary_file_paths": [
+                "results\\GioDiscreteRandom8agentsPPO\\WalkerAgentMulti\\WalkerAgentMulti-720592.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

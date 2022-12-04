@@ -12,7 +12,7 @@ from mlagents_envs.environment import ActionTuple
 
 import os
 
-criterion = nn.MSELoss()
+criterion = nn.SmoothL1Loss()
 
 class DQN(object):
     def __init__(self, nb_states, nb_actions, n_agents, max_iterations):
@@ -24,8 +24,8 @@ class DQN(object):
         self.n_agents = n_agents
         self.max_iterations = max_iterations
 
-        self.hidden1 = 128
-        self.hidden2 = 128
+        self.hidden1 = 512
+        self.hidden2 = 512
         self.init_w = 0.003
 
         self.rmsize = 300_000
@@ -35,6 +35,11 @@ class DQN(object):
         self.tau = 0.001
         self.discount = 0.99
         self.depsilon = 1.0 / max_iterations
+
+        self.is_training = True
+
+        self.recent_state = {}
+        self.recent_action = {}
 
         self.target_update_freq = 5
 
@@ -62,12 +67,6 @@ class DQN(object):
 
         self.epsilon = 1.0
 
-        self.is_training = True
-
-        self.recent_state = {}
-        self.recent_action = {}
-
-        
         # if USE_CUDA: self.cuda()
 
     def initialize_states_actions(self, decision_steps):
@@ -105,7 +104,12 @@ class DQN(object):
 
         # optimize qf
         qvals = self.network(to_tensor(state_batch))
-        selected_qs = torch.sum(qvals * to_tensor(action_batch), axis=1)
+        # selected_qs = torch.sum(qvals * to_tensor(action_batch), axis=1)
+        selected_qs = qvals.gather(0,to_tensor(action_batch,dtype=torch.int64)).squeeze(1)
+
+        if selected_qs.size() != y_target.size():
+            print("Oooo")
+
         qval_loss = criterion(selected_qs, y_target)
 
         self.optimizer.zero_grad()
@@ -124,10 +128,8 @@ class DQN(object):
         return qval_loss.detach()
 
     def eval(self):
-        self.actor.eval()
-        self.actor_target.eval()
-        self.critic.eval()
-        self.critic_target.eval()
+        self.network.eval()
+        self.network_target.eval()
 
     def cuda(self):
         self.actor.cuda()
@@ -144,25 +146,24 @@ class DQN(object):
         action = np.random.randint(low=0, high=self.nb_actions,size=(self.n_agents,1))
         self.update_recent_actions(action)
         action_tuple = ActionTuple()
-        action_tuple.add_discrete(action.reshape((self.n_agents,1)))
+        action_tuple.add_discrete(action)
 
         return action_tuple
 
 
-    def select_action(self, s_t, decay_epsilon=True):
+    def select_action(self, s_t):
         
-        if np.random.uniform() < self.epsilon:
-            return self.random_action()
-            print(self.epsilon)
-        else:
-            action = np.argmax(self.network([s_t]))
-
         self.epsilon -= self.depsilon
+        if np.random.uniform() < self.epsilon and self.is_training == 1.:
+            return self.random_action()
+        else:
+            with torch.no_grad():
+                action = torch.argmax(self.network(to_tensor(s_t, volatile=True)),1).numpy().reshape(self.n_agents,1)
 
         self.update_recent_actions(action)
 
         action_tuple = ActionTuple()
-        action_tuple.add_discrete(action.reshape((self.n_agents,1)))
+        action_tuple.add_discrete(action)
 
         return action_tuple
         
@@ -186,11 +187,11 @@ class DQN(object):
 
         hard_update(self.network_target, self.network)
 
-    def save_model(self,file_to_save,identifier,env):
+    def save_model(self,file_to_save,identifier,env, step):
         file_to_save += "//data" + identifier
         torch.save(
             self.network.state_dict(),
-            '{}/network_{}.pkl'.format(file_to_save,env)
+            '{}/network_{}_{}.pkl'.format(file_to_save,env, step)
         )
 
     def reset_random_process(self):

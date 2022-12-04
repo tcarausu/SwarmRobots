@@ -3,30 +3,36 @@ from .experience import *
 from .ddpg import DDPG
 from .util import *
 import json
+import pickle
 
 
 class TrainerMultiAgent:
 
-    def __init__(self, agent, file_to_save, env_name):
+    def __init__(self, agent, folder, env_name, identifier):
 
         self.agent = agent
         self.log_steps = []
         self.log_policy_losses = []
         self.log_episodes = []
 
-        self.file_to_save = file_to_save
+        self.folder = folder
         self.env_name = env_name
+        self.identifier = identifier
 
 
     def log(self):
-        with open(f"{self.file_to_save}/results/{self.env_name}/log.json", 'w') as f:
+        with open(f"{self.folder}/results/{self.env_name}/log.json", 'w') as f:
             json.dump({"policy" : self.log_policy_losses, "episodes" : self.log_episodes}, f)
+
+    def save_model(self):
+        with open(self.folder + "//model//" + self.env_name) as f:
+            pickle.dump(obj = self.agent, file = f)
         
 
-    def train(self, resume_model, env, identifier, warmup):
+    def train(self, resume_model,step, env, warmup):
         
         if resume_model:
-            self.agent.load_weights(self.file_to_save, identifier, self.env_name)
+            self.agent.load_weights(self.folder, self.identifier, self.env_name+"_"+step)
         
 
         behavior_name = list(env.behavior_specs)[0]
@@ -39,11 +45,6 @@ class TrainerMultiAgent:
         episode_reward = {}
         reset = {}
 
-        
-
-        log_steps = []
-        log_policy_losses = []
-        log_episodes = []
 
         done = False
         
@@ -64,10 +65,7 @@ class TrainerMultiAgent:
 
         while step < self.agent.max_iterations:
 
-            
-
-            log_steps.append(step)
-
+        
             if terminal_steps:  
                 self.agent.reset_random_process()
                 decision_steps, terminal_steps = env.get_steps(behavior_name)
@@ -96,7 +94,7 @@ class TrainerMultiAgent:
                 print('Agent {}, #{}: episode_reward:{} episode steps:{}'.format(agent_id, episode[agent_id],episode_reward[agent_id],episode_steps[agent_id]))
 
 
-                self.log_episodes.append([{"agent" : agent_id}, {"episode_reward" : episode_reward[agent_id]}, {"episode_steps" : episode_steps[agent_id]}])
+                self.log_episodes.append([{"agent" : int(agent_id)}, {"episode_reward" : int(episode_reward[agent_id])}, {"episode_steps" : int(episode_steps[agent_id])}])
 
                 episode_steps[agent_id] = 0
                 episode_reward[agent_id] = 0
@@ -119,22 +117,13 @@ class TrainerMultiAgent:
 
             if step > warmup :
                 loss = self.agent.update_policy(step)
-                self.log_policy_losses.append(loss.item())
-                if step % 100 == 0:
-                    print(f"Step number {step}, saving_model")
-                    self.agent.save_model(self.file_to_save, identifier, self.env_name)
-
+                if step % 5000 == 0:
+                    self.log_policy_losses.append(loss.item())
+                    print(f"Step number {step}, saving_model and logging")
+                    self.agent.save_model(self.folder, self.identifier, self.env_name, step)
+                    self.log()  
             step += 1
 
-        self.log()   
-            
-        # print(episode)
-        # print(episode_reward)
-        # print(episode_steps)
-
-
-        # with open(f"Results/{env_name}/Episode reward_{env_name}_{identifier}.json", 'w') as f:
-        #     json.dump(episode_reward, f)
 
         
     
