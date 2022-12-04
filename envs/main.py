@@ -118,11 +118,13 @@ if __name__ =="__main__":
 
     folder = os.path.dirname(__file__) #folder envs
     env_name = args.env_name #name of the environment and of the model (we need it also when we are testing a model on unity)
+    identifier = "//" + args.identifier + "//"   #run identifier
+
+    #check if results and data exist, otherwise create it
+
+    if not os.path.isdir(folder + "//results//" + args.env_name + "//" + args.identifier): 
+        os.makedirs(folder + "//results//" + args.env_name + "//" + args.identifier)
     
-    if not os.path.isdir(folder + "//results//" + args.env_name): #we'll need it in results folder, let's check if it exists, otherwise create it
-        os.makedirs(folder + "//results//" +args.env_name)
-    
-    identifier = "//" + args.identifier + "//"   #run identifier. it is used in datafolder, so we have to check that it exists
     
     if not os.path.isdir(folder + "//data//" + args.identifier):
         os.makedirs(folder + "//data//" + args.identifier)
@@ -144,8 +146,8 @@ if __name__ =="__main__":
     action_size = 7 if using_discrete else 2
 
     #ensure model folder is created
-    if not os.path.isdir(folder + "//model//" + args.identifier):
-        os.makedirs(folder + "//model//" + env_name)
+    if not os.path.isdir(folder + "//model//" + env_name + "//" + args.identifier):
+        os.makedirs(folder + "//model//" + env_name + "//" + args.identifier)
     
     training = args.mode == "train"
             

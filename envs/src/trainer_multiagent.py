@@ -21,11 +21,11 @@ class TrainerMultiAgent:
 
 
     def log(self):
-        with open(f"{self.folder}/results/{self.env_name}/log.json", 'w') as f:
+        with open(f"{self.folder}/results/{self.env_name}/{self.identifier}/log.json", 'w') as f:
             json.dump({"policy" : self.log_policy_losses, "episodes" : self.log_episodes}, f)
 
     def save_model(self):
-        with open(self.folder + "//model//" + self.env_name) as f:
+        with open(f"{self.folder}/model/{self.env_name}/{self.identifier}/model","wb") as f:
             pickle.dump(obj = self.agent, file = f)
         
 
