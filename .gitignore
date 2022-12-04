@@ -103,3 +103,9 @@ fmod_editor.log
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+
+envs/data
+envs/model
+envs/binary
+envs/src/__pycache__

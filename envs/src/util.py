@@ -17,20 +17,31 @@ def prBlack(prt): print("\033[98m {}\033[00m" .format(prt))
 def normalize_state(state):
         max = np.max(state)
         min = np.min(state)
+        
+        if max == min: 
+            return state
+        
         state = (state-min) / (max - min)
         return state
 
 def normalize_states(state):
         max = np.max(state,axis = 1)
         min = np.min(state, axis = 1)
+
+
+        for i in range(len(max)):
+            if (max[i] == min[i] and max[i]==0):
+                max[i] = 1 
+
+
         state = (state-min[:,None]) / (max[:,None] - min[:,None])
         return state
 
 def get_unique_obs(obs, max_distance = 50):
     if len(obs) > 1:
-        if len(obs[0].shape)>1:
+        if len(obs[0].shape)>1: #batch of observation
             return np.concatenate([obs[0], normalize_states(obs[1])], axis = 1)
-        else:
+        else: #agent observation
             return np.concatenate([obs[0], normalize_state(obs[1])])
     else:
         return obs

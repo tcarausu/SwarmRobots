@@ -97,6 +97,23 @@ public class WalkerAgentMulti : Agent
         spawnSize.x -= length / 2;
         spawnSize.z -= length / 2;
 
+        var envParameters = Academy.Instance.EnvironmentParameters;
+        existenctialPenalty = envParameters.GetWithDefault("existenctial", existenctialPenalty);
+        nearAgentPenalty = envParameters.GetWithDefault("near_agent", nearAgentPenalty);
+
+        hitWallPenalty = envParameters.GetWithDefault("hit_wall", hitWallPenalty);
+        hitAgentPenalty = envParameters.GetWithDefault("hit_agent", hitAgentPenalty);
+
+        checkpointReward = envParameters.GetWithDefault("checkpoint", checkpointReward);
+        targetReward = envParameters.GetWithDefault("target", targetReward);
+        nearTargetReward = envParameters.GetWithDefault("near_target", nearTargetReward);
+
+
+        Debug.Log(existenctialPenalty);
+        Debug.Log(nearAgentPenalty);
+
+
+
         if (hasRandomMaze)
         {
             //getting the objectList of Mazes

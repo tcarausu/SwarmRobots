@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 499992,
+                "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-499992.onnx",
+                "reward": null,
+                "creation_time": 1670162208.6571524,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-499992.pt"
+                ]
+            },
+            {
+                "steps": 999998,
+                "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-999998.onnx",
+                "reward": 1.7131311496098836,
+                "creation_time": 1670165350.2780585,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-999998.pt"
+                ]
+            },
+            {
+                "steps": 1499964,
+                "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-1499964.onnx",
+                "reward": null,
+                "creation_time": 1670168653.627018,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-1499964.pt"
+                ]
+            },
+            {
+                "steps": 1999983,
+                "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-1999983.onnx",
+                "reward": 0.7650271654129028,
+                "creation_time": 1670171906.8111086,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-1999983.pt"
+                ]
+            },
+            {
+                "steps": 2376220,
+                "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-2376220.onnx",
+                "reward": null,
+                "creation_time": 1670174432.5045621,
+                "auxillary_file_paths": [
+                    "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-2376220.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 2376220,
+            "file_path": "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1670174432.5045621,
+            "auxillary_file_paths": [
+                "results\\GioDiscreteRandom4agentsNOCOMM\\WalkerAgentMulti\\WalkerAgentMulti-2376220.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

@@ -2,34 +2,61 @@ from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from src import *
 from src.util import *
 
-import sys
+import json
 import numpy as np
 import os
 import argparse 
 from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
+from mlagents_envs.side_channel.environment_parameters_channel import EnvironmentParametersChannel
 
 
 
-def get_env(file_name, no_graphics):
-    engineConfigChannel = EngineConfigurationChannel()
-    engineConfigChannel.set_configuration_parameters(width=800, height=800, quality_level=1, time_scale=20.,
+def get_env(file_name, no_graphics, training, config):
+
+    parameter_channel = EnvironmentParametersChannel()
+
+    for k in config["penalties"]:
+        parameter_channel.set_float_parameter(key=k, value=config["penalties"][k])
+    for k in config["rewards"]:
+        parameter_channel.set_float_parameter(key=k, value=config["rewards"][k])
+
+    engine_config_channel = EngineConfigurationChannel()
+    engine_config_channel.set_configuration_parameters(width=800, height=800, quality_level=1, time_scale=20. if training else 1.,
                                                  target_frame_rate=-1, capture_frame_rate=60)
-
-    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, seed = 42, 
-                            worker_id=get_worker_id() if file_name != None else 0,  side_channels=[engineConfigChannel]) 
+    if file_name is None:
+        print("Start game in Unity..")
+    else:
+        print("Connecting to env...")
+    env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, seed = 42, worker_id=get_worker_id() if file_name != None else 0,  side_channels=[parameter_channel, engine_config_channel]) 
     
     env.reset()
     behavior_name = list(env.behavior_specs)[0]
     decision_steps, _ = env.get_steps(behavior_name)
-    if len(decision_steps) > 1: #using comm
+    
+    if len(decision_steps.obs) > 1: #using comm
+        rayc = decision_steps.obs[0]
+        comm = decision_steps.obs[1]
 
-        comm = decision_steps.obs[0]
-        rayc = decision_steps.obs[1]
-        return env, comm.shape[0], comm.shape[1] + rayc.shape[1]
+        info = f'''
+        Using communication.
+        
+        Number of agents: {comm.shape[0]}
+
+        Observation space size: {comm.shape[1]}
+        Raycast size : {rayc.shape[1]}
+        '''
+        return env, comm.shape[0], comm.shape[1] + rayc.shape[1], info
 
     else:
-        obs = decision_steps.obs[0]
-        return env, obs.shape[0], obs.shape[1]
+        rayc = decision_steps.obs[0]
+
+        info = f'''
+        Not using communication.
+        Number of agents: {rayc.shape[0]}
+        Observation space size: {rayc.shape[1]}
+        '''
+        
+        return env, rayc.shape[0], rayc.shape[1], info
     
 def test(num_episodes, brain, env, file, model_name, identifier):
 
@@ -37,7 +64,6 @@ def test(num_episodes, brain, env, file, model_name, identifier):
     brain.load_weights(file,identifier, model_name)
     brain.is_training = False
     brain.eval() 
-
 
 
     behavior_name = list(env.behavior_specs)[0]
@@ -85,6 +111,17 @@ def test(num_episodes, brain, env, file, model_name, identifier):
                 done = True
                 break
 
+
+def parse_json(file):
+    with open(file, "r") as f:
+        return json.load(f)
+
+def print_log_info(path,infos):
+    print(infos)
+    with open(path + "config.txt", "w") as f:
+        f.write(infos)
+
+
 """
 this regards my models :
 
@@ -101,18 +138,24 @@ if __name__ =="__main__":
 
     set_seed()
 
+
     parser = argparse.ArgumentParser(description='SwarmRobots')
 
     parser.add_argument('--env_name', default="MULTIAGENT_DISCRETE_8agent_random", type = str)
     parser.add_argument('--type', default="discrete", type=str)
     parser.add_argument('--identifier', default="Discrete", type=str)
+    parser.add_argument("--config_file", default="test1", type=str)
     parser.add_argument('--warmup', default=1000, type=int)
     parser.add_argument('--num_iterations', default=1_000_000, type=int)
     parser.add_argument('--mode', default="train", type=str)
     parser.add_argument('--model_step', default="", type=str)
     parser.add_argument('--on_unity', default="", type = str)
+    parser.add_argument("--hidden_neurons", default=256, type=int)
 
     args = parser.parse_args()
+
+    
+
 
     #---FILES
 
@@ -120,17 +163,25 @@ if __name__ =="__main__":
     env_name = args.env_name #name of the environment and of the model (we need it also when we are testing a model on unity)
     identifier = "//" + args.identifier + "//"   #run identifier
 
-    #check if results and data exist, otherwise create it
+    #ensure results, data and model folders are properly set
 
     if not os.path.isdir(folder + "//results//" + args.env_name + "//" + args.identifier): 
         os.makedirs(folder + "//results//" + args.env_name + "//" + args.identifier)
     
     
-    if not os.path.isdir(folder + "//data//" + args.identifier):
-        os.makedirs(folder + "//data//" + args.identifier)
+    if not os.path.isdir(folder + "//data//" + args.env_name + "//" + args.identifier):
+        os.makedirs(folder + "//data//" + args.env_name + "//" + args.identifier)
+
+
+    if not os.path.isdir(folder + "//model//" + env_name + "//" + args.identifier):
+        os.makedirs(folder + "//model//" + env_name + "//" + args.identifier)
+    
 
     #file where the environment is. If we want to attach the code to unity, it has to be None
     file_name = folder + "//binary//" + env_name if args.on_unity != "on_unity" else None
+
+
+    config = parse_json(folder + "//config//" + args.config_file + ".json")
     
 
     #----HYPERPARAMETERS
@@ -145,18 +196,54 @@ if __name__ =="__main__":
 
     action_size = 7 if using_discrete else 2
 
-    #ensure model folder is created
-    if not os.path.isdir(folder + "//model//" + env_name + "//" + args.identifier):
-        os.makedirs(folder + "//model//" + env_name + "//" + args.identifier)
-    
     training = args.mode == "train"
+
+
+
+    infos = f'''
+
+    Mode: {args.mode}
+
+    Environment name: {env_name}
+    Type of action: {args.type}
+    Number of action: {action_size}
+
+    Run identifier: {identifier}
+    Warmup: {warmup}
+    Number of iterations: {num_iterations}
+
+    Number of layers : 2
+    Number of hidden neurons: {args.hidden_neurons}
+
+    Configuration file: {args.config_file}
+
+    "penalties" : 
+        "existenctial" : {config["penalties"]["existenctial"]},
+        "near_agent" : {config["penalties"]["near_agent"]},
+        "hit_wall" : {config["penalties"]["hit_wall"]},
+        "hit_agent" :{config["penalties"]["hit_agent"]},
+    
+
+    "rewards" : 
+        "checkpoint" : {config["rewards"]["checkpoint"]}
+        "near_target" :{config["rewards"]["near_target"]}
+        "target" : {config["rewards"]["target"]}
+    
+    '''
+
+    
+
             
     if training:
 
-        env, number_of_agents, observation_size = get_env(file_name, True)
+        env, number_of_agents, observation_size, info = get_env(file_name, True, training, config)
 
-        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations) if using_discrete else\
-                DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+        infos += info
+
+        print_log_info(folder + "//model//" + env_name + identifier, infos)
+
+        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons) if using_discrete else\
+                DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons)
 
         trainer = TrainerMultiAgent(agent=agent,folder = folder,env_name = env_name, identifier = identifier)
                     
@@ -164,15 +251,14 @@ if __name__ =="__main__":
             trainer.train(resume_model = False, step=args.model_step, env = env, warmup = warmup)
         finally:
             trainer.log()
-            trainer.save_model()
+            # trainer.save_model()
     
     
-                      
     else:
-        env, number_of_agents, observation_size = get_env(file_name, False)
+        env, number_of_agents, observation_size, info = get_env(file_name, False, training, config)
 
-        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations) if using_discrete else\
-                DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations)
+        agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons) if using_discrete else\
+                DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons)
 
         test(num_episodes = 10, brain = agent, env = env, file = folder, model_name = env_name + "_" + args.model_step, identifier = identifier)
 

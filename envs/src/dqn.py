@@ -15,17 +15,16 @@ import os
 criterion = nn.SmoothL1Loss()
 
 class DQN(object):
-    def __init__(self, nb_states, nb_actions, n_agents, max_iterations):
+    def __init__(self, nb_states, nb_actions, n_agents, max_iterations, hidden_neurons, enable_double_q=True):
 
-        self.enable_double_q = False
         
         self.nb_states = nb_states
         self.nb_actions= nb_actions
         self.n_agents = n_agents
         self.max_iterations = max_iterations
 
-        self.hidden1 = 512
-        self.hidden2 = 512
+        self.hidden1 = hidden_neurons
+        self.hidden2 = hidden_neurons
         self.init_w = 0.003
 
         self.rmsize = 300_000
@@ -42,6 +41,8 @@ class DQN(object):
         self.recent_action = {}
 
         self.target_update_freq = 5
+
+        self.enable_double_q = enable_double_q
 
 
         self.prate = 0.0001
@@ -78,16 +79,13 @@ class DQN(object):
     def update_policy(self, iteration):
         state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = self.memory.sample_and_split(self.batch_size)
         with torch.no_grad():
-            # if self._double_q:
-            #     # Use online qf to get optimal actions
-            #     selected_actions = torch.argmax(self.network(next_state_batch), axis=1)
-            #     # use target qf to get Q values for those actions
-            #     selected_actions = selected_actions.long().unsqueeze(1)
-            #     best_qvals = torch.gather(self.network_target(next_state_batch),
-            #                               dim=1,
-            #                               index=selected_actions)
+            if self.enable_double_q:
+                # Use online qf to get optimal actions
+                selected_actions = torch.argmax(self.network(to_tensor(next_state_batch)), axis=1).unsqueeze(1)
+                # use target qf to get Q values for those actions
+                best_qvals = self.network_target(to_tensor(next_state_batch)).gather(1,selected_actions)
 
-            # else:
+            else:
                 target_qvals = self.network_target(to_tensor(next_state_batch, volatile=True))
                 best_qvals, _ = torch.max(target_qvals, 1)
                 best_qvals = best_qvals.unsqueeze(1)
@@ -105,10 +103,8 @@ class DQN(object):
         # optimize qf
         qvals = self.network(to_tensor(state_batch))
         # selected_qs = torch.sum(qvals * to_tensor(action_batch), axis=1)
-        selected_qs = qvals.gather(0,to_tensor(action_batch,dtype=torch.int64)).squeeze(1)
+        selected_qs = qvals.gather(1,to_tensor(action_batch,dtype=torch.int64)).squeeze(1)
 
-        if selected_qs.size() != y_target.size():
-            print("Oooo")
 
         qval_loss = criterion(selected_qs, y_target)
 
@@ -179,19 +175,19 @@ class DQN(object):
         
 
     def load_weights(self, file_to_save,identifier,env_name):
-        file_to_save += "//data"
+        file_to_save += "//data//"  + env_name +"//" + identifier
 
         self.network.load_state_dict(
-            torch.load('{}/network_{}.pkl'.format(file_to_save + identifier,env_name))
+            torch.load('{}/network_{}.pkl'.format(file_to_save,env_name + identifier))
         )
 
         hard_update(self.network_target, self.network)
 
     def save_model(self,file_to_save,identifier,env, step):
-        file_to_save += "//data" + identifier
+        file_to_save += "//data//" + env +"//" + identifier
         torch.save(
             self.network.state_dict(),
-            '{}/network_{}_{}.pkl'.format(file_to_save,env, step)
+            '{}/network_{}_{}.pkl'.format(file_to_save,env + identifier, step)
         )
 
     def reset_random_process(self):

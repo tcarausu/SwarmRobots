@@ -16,7 +16,7 @@ from mlagents_envs.environment import ActionTuple
 criterion = nn.MSELoss()
 
 class DDPG(object):
-    def __init__(self, nb_states, nb_actions, n_agents, max_iterations):
+    def __init__(self, nb_states, nb_actions, n_agents, max_iterations, hidden_neurons):
         
         self.nb_states = nb_states
         self.nb_actions= nb_actions
@@ -41,8 +41,8 @@ class DDPG(object):
         
         # Create Actor and Critic Network1\\
         net_cfg = {
-            'hidden1':self.hidden1, 
-            'hidden2':self.hidden2, 
+            'hidden1':hidden_neurons, 
+            'hidden2':hidden_neurons, 
             'init_w':self.init_w
         }
         self.actor = Actor(self.nb_states, self.nb_actions, **net_cfg)
