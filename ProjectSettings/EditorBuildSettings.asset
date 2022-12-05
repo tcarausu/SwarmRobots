@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/PseudoRandomWalls.unity
+    guid: c6713b57a43b3aa42904edc72397590f
   m_configObjects: {}

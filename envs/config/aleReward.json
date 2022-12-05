@@ -1,0 +1,14 @@
+{
+    "penalties" : {
+        "existenctial" : 50000,
+        "near_agent" : 0.01 ,
+        "hit_wall" : 0.01,
+        "hit_agent" : 0.003
+    },
+
+    "rewards" : {
+        "checkpoint" : 0.15,
+        "target" : 3,
+        "near_target" : 0.002
+    }
+}
