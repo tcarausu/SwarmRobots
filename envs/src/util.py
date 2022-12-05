@@ -43,8 +43,11 @@ def get_unique_obs(obs, max_distance = 50):
             return np.concatenate([obs[0], normalize_states(obs[1])], axis = 1)
         else: #agent observation
             return np.concatenate([obs[0], normalize_state(obs[1])])
-    else:
-        return obs
+    else: #just one obs, can be raycast or communication
+        if len(obs[0].shape) > 1:
+            return normalize_states(obs[0])
+        else:
+            return normalize_state(obs[0])
 
 def to_numpy(var):
     return var.cpu().data.numpy() if USE_CUDA else var.data.numpy()

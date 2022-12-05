@@ -26,7 +26,7 @@ def get_env(file_name, no_graphics, training, config):
     if file_name is None:
         print("Start game in Unity..")
     else:
-        print("Connecting to env...")
+        print("Connecting to env...", training )
     env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, seed = 42, worker_id=get_worker_id() if file_name != None else 0,  side_channels=[parameter_channel, engine_config_channel]) 
     
     env.reset()
@@ -58,10 +58,10 @@ def get_env(file_name, no_graphics, training, config):
         
         return env, rayc.shape[0], rayc.shape[1], info
     
-def test(num_episodes, brain, env, file, model_name, identifier):
+def test(num_episodes, brain, env, file, model_name, identifier, step_to_resume):
 
     env.reset()
-    brain.load_weights(file,identifier, model_name)
+    brain.load_weights(file,identifier, model_name, step_to_resume)
     brain.is_training = False
     brain.eval() 
 
@@ -116,22 +116,13 @@ def parse_json(file):
     with open(file, "r") as f:
         return json.load(f)
 
+
+
 def print_log_info(path,infos):
     print(infos)
     with open(path + "config.txt", "w") as f:
         f.write(infos)
 
-
-"""
-this regards my models :
-
-train ddpg: python SwarmRobots\envs\main.py --env_name MULTIAGENT_CONTINUOUS_8agent_random --identifier Continuous --type cont --warmup 10000 
-
-test ddpg: python SwarmRobots\envs\main.py '--mode' 'test' '--env_name' 'MULTIAGENT_DISCRETE_8agent_random' '--identifier' 'Discrete' '--type' 'discrete' '--on_unity' 'on_unity' '--model_step' '775000' 
-
-train dqn:  
-
-"""
 
 
 if __name__ =="__main__":
@@ -153,9 +144,6 @@ if __name__ =="__main__":
     parser.add_argument("--hidden_neurons", default=256, type=int)
 
     args = parser.parse_args()
-
-    
-
 
     #---FILES
 
@@ -231,9 +219,6 @@ if __name__ =="__main__":
     
     '''
 
-    
-
-            
     if training:
 
         env, number_of_agents, observation_size, info = get_env(file_name, True, training, config)
@@ -251,7 +236,7 @@ if __name__ =="__main__":
             trainer.train(resume_model = False, step=args.model_step, env = env, warmup = warmup)
         finally:
             trainer.log()
-            # trainer.save_model()
+            trainer.save_model()
     
     
     else:
@@ -260,7 +245,7 @@ if __name__ =="__main__":
         agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons) if using_discrete else\
                 DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons)
 
-        test(num_episodes = 10, brain = agent, env = env, file = folder, model_name = env_name + "_" + args.model_step, identifier = identifier)
+        test(num_episodes = 10, brain = agent, env = env, file = folder, model_name = env_name , step_to_resume =  args.model_step, identifier = identifier)
 
 
 

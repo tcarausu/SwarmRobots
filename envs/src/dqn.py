@@ -154,7 +154,8 @@ class DQN(object):
             return self.random_action()
         else:
             with torch.no_grad():
-                action = torch.argmax(self.network(to_tensor(s_t, volatile=True)),1).numpy().reshape(self.n_agents,1)
+                output = self.network(to_tensor(s_t, volatile=True))
+                action = torch.argmax(output,1).numpy().reshape(self.n_agents,1)
 
         self.update_recent_actions(action)
 
@@ -174,20 +175,20 @@ class DQN(object):
         self.recent_state[agent] = obs
         
 
-    def load_weights(self, file_to_save,identifier,env_name):
+    def load_weights(self, file_to_save,identifier,env_name, step_to_resume):
         file_to_save += "//data//"  + env_name +"//" + identifier
 
         self.network.load_state_dict(
-            torch.load('{}/network_{}.pkl'.format(file_to_save,env_name + identifier))
+            torch.load('{}/network_{}.pkl'.format(file_to_save,env_name + identifier[2:-2] + "_" + step_to_resume))
         )
 
         hard_update(self.network_target, self.network)
 
     def save_model(self,file_to_save,identifier,env, step):
-        file_to_save += "//data//" + env +"//" + identifier
+        file_to_save += "//data//" + env + identifier
         torch.save(
             self.network.state_dict(),
-            '{}/network_{}_{}.pkl'.format(file_to_save,env + identifier, step)
+            '{}/network_{}_{}.pkl'.format(file_to_save,env + identifier[2:-2], step)
         )
 
     def reset_random_process(self):
