@@ -23,6 +23,7 @@ public class Test : Agent
         TargetPosition
     }
 
+    private List<string> commList;
     public List<Communication> CommunicationMode;
     public Movement movementMode;
     public float playerSpeed = 10;
@@ -62,6 +63,7 @@ public class Test : Agent
 
     void Start()
     {
+        commList = new List<string>();
         controller = GetComponent<CharacterController>();
         clearedCheckpoints = new List<Checkpoint>();
 
@@ -260,6 +262,7 @@ public class Test : Agent
             Debug.Log("Reached Target in test number " + testNumber);
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
             Debug.Log("Time needed to reach: " + (ts.TotalMilliseconds / 1000.0f).ToString() + "  ---  Total reward = " + totalReward);
+            System.IO.File.WriteAllLines("Communication_"+name+".txt", commList);
             ReachedTarget();
             return;
         }
@@ -280,9 +283,10 @@ public class Test : Agent
         if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
             int messageIndex = actionBuffers.ContinuousActions.Length - 1;
+            float message = actionBuffers.ContinuousActions[messageIndex];
+            commList.Add(message.ToString());
             foreach (Test agent in otherAgents)
             {
-                float message = actionBuffers.ContinuousActions[messageIndex];
                 agent.Communicate(name + "freeCommunication", message);
             }
         }
