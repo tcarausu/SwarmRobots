@@ -259,10 +259,12 @@ public class Test : Agent
 
         if (reachedGoal)
         {
-            Debug.Log("Reached Target in test number " + testNumber);
+            Debug.Log(name + " Reached Target in test number " + testNumber);
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
             Debug.Log("Time needed to reach: " + (ts.TotalMilliseconds / 1000.0f).ToString() + "  ---  Total reward = " + totalReward);
-            System.IO.File.WriteAllLines("Communication_"+name+".txt", commList);
+            //printLog();
+            //foreach (Test agent in otherAgents)
+            //    agent.printLog();
             ReachedTarget();
             return;
         }
@@ -290,7 +292,13 @@ public class Test : Agent
                 agent.Communicate(name + "freeCommunication", message);
             }
         }
+        printLog();
 
+    }
+
+    private void printLog()
+    {
+        System.IO.File.WriteAllLines("Communication_" + name + ".txt", commList);
     }
 
     private void CheckTargetProximity()
