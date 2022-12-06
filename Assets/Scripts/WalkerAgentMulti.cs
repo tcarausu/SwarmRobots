@@ -74,7 +74,7 @@ public class WalkerAgentMulti : Agent
     private Vector3 spawnSize;
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
 
-    [Header("The area in which the agent is located")]
+    [Header("The changing maze object in the same area as the agent")]
     public GameObject TrainingArea;
     [Tooltip("Set this to true if the area of the agent can change maze")]
     public bool hasRandomMaze;
@@ -108,15 +108,9 @@ public class WalkerAgentMulti : Agent
         targetReward = envParameters.GetWithDefault("target", targetReward);
         nearTargetReward = envParameters.GetWithDefault("near_target", nearTargetReward);
 
-
-        Debug.Log(existenctialPenalty);
-        Debug.Log(nearAgentPenalty);
-
-
-
         if (hasRandomMaze)
         {
-            //getting the objectList of Mazes
+
             _activeMaze = TrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
             Goal = _activeMaze.Find("GOAL");
         }
