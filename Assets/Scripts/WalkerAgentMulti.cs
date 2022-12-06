@@ -31,31 +31,30 @@ public class WalkerAgentMulti : Agent
         Absent,
         Distance,
         FreeCommunication,
-        TargetPosition
+        Position
     }
 
     public List<Communication> CommunicationMode;
     public Movement movementMode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
-    public bool ownPositionAsObservation;
 
     private int numTargetsFound = 0;
     [Tooltip("This number represents the number of episodes that the target mantain his starting position")]
     public int firstChangeTargetPos = 10;
 
     [Header("Rewards")]
-    public float existenctialPenalty = 0.001f;
+    private float existenctialPenalty = 0.001f;
 
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
-    public float nearAgentPenalty = 0.1f;
+    private float nearAgentPenalty = 0.01f;
 
-    public float hitWallPenalty = 0.05f;
-    public float hitAgentPenalty = 0.03f;
+    private float hitWallPenalty = 0.01f;
+    private float hitAgentPenalty = 0.003f;
 
-    public float checkpointReward = 0.15f;
-    public float targetReward = 1;
-    public float nearTargetReward = 0.01f;
+    private float checkpointReward = 0.15f;
+    private float targetReward = 1;
+    private float nearTargetReward = 0.002f;
 
     private Dictionary<string, float> communicationMap;
 
@@ -138,15 +137,21 @@ public class WalkerAgentMulti : Agent
             foreach (var agent in otherAgents)
                 communicationMap.Add(agent.name + "freeCommunication", 0);
         }
-        if (CommunicationMode.Contains(Communication.TargetPosition))
+        if (CommunicationMode.Contains(Communication.Position))
         {
+            obsSize += 2 * otherAgents.Count;
+            foreach (var agent in otherAgents)
+            {
+                communicationMap.Add(agent.name + "position_x", 0);
+                communicationMap.Add(agent.name + "position_z", 0);
+            }
+
             obsSize += 2;
-            communicationMap.Add("targetx", 0);
-            communicationMap.Add("targetz", 0);
+            communicationMap.Add(name + "position_x", 0);
+            communicationMap.Add(name + "position_z", 0);
         }
 
-        if (ownPositionAsObservation)
-            obsSize += 2;
+       
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -212,25 +217,35 @@ public class WalkerAgentMulti : Agent
         else
             CheckNearAgents();
 
+
+        if (CommunicationMode.Contains(Communication.Position)){
+
+            foreach (var agent in otherAgents)
+            {
+                communicationMap[agent.name + "position_x"] = agent.transform.localPosition.x;
+                communicationMap[agent.name + "position_z"] = agent.transform.localPosition.z;
+            }
+
+            communicationMap[name + "position_x"] = transform.localPosition.x;
+            communicationMap[name + "position_z"] = transform.localPosition.z;
+
+        }
+
         //The only observation is the raycast if communication is not used
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
-        if (ownPositionAsObservation)
-        {
-            sensor.AddObservation(transform.localPosition.x);
-            sensor.AddObservation(transform.localPosition.z);
-        }
+        
     }
 
-    private void CommunicateTargetPosition()
-    {
-        foreach (WalkerAgentMulti agent in otherAgents)
-        {
-            agent.Communicate("targetx", Target.localPosition.x);
-            agent.Communicate("targetz", Target.localPosition.z);
-        }
-    }
+    //private void CommunicateTargetPosition()
+    //{
+    //    foreach (WalkerAgentMulti agent in otherAgents)
+    //    {
+    //        agent.Communicate("targetx", Target.localPosition.x);
+    //        agent.Communicate("targetz", Target.localPosition.z);
+    //    }
+    //}
 
     private bool reachedGoal;
 
@@ -322,8 +337,8 @@ public class WalkerAgentMulti : Agent
             if (hit.collider.name.Equals(Target.name))
             {
                 AddReward((1 / hit.distance) * nearTargetReward);
-                if (CommunicationMode.Equals(Communication.TargetPosition))
-                    CommunicateTargetPosition();
+                //if (CommunicationMode.Equals(Communication.TargetPosition))
+                //    CommunicateTargetPosition();
             }
     }
 
