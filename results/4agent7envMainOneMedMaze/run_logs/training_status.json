@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 3499988,
+                "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-3499988.onnx",
+                "reward": null,
+                "creation_time": 1670304174.7987466,
+                "auxillary_file_paths": [
+                    "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-3499988.pt"
+                ]
+            },
+            {
+                "steps": 3999972,
+                "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-3999972.onnx",
+                "reward": null,
+                "creation_time": 1670306776.2064586,
+                "auxillary_file_paths": [
+                    "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-3999972.pt"
+                ]
+            },
+            {
+                "steps": 4499984,
+                "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-4499984.onnx",
+                "reward": null,
+                "creation_time": 1670309663.314216,
+                "auxillary_file_paths": [
+                    "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-4499984.pt"
+                ]
+            },
+            {
+                "steps": 4999988,
+                "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-4999988.onnx",
+                "reward": null,
+                "creation_time": 1670312527.0790324,
+                "auxillary_file_paths": [
+                    "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-4999988.pt"
+                ]
+            },
+            {
+                "steps": 5000244,
+                "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-5000244.onnx",
+                "reward": null,
+                "creation_time": 1670312527.1542947,
+                "auxillary_file_paths": [
+                    "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-5000244.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5000244,
+            "file_path": "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti.onnx",
+            "reward": null,
+            "creation_time": 1670312527.1542947,
+            "auxillary_file_paths": [
+                "results\\4agent7envMainOneMedMaze\\WalkerAgentMulti\\WalkerAgentMulti-5000244.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}
