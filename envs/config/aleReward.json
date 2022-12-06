@@ -1,6 +1,6 @@
 {
     "penalties" : {
-        "existenctial" : 50000,
+        "existenctial" : 0.001,
         "near_agent" : 0.01 ,
         "hit_wall" : 0.01,
         "hit_agent" : 0.003

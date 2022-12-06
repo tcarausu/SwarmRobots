@@ -8,6 +8,7 @@ import os
 import argparse 
 from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 from mlagents_envs.side_channel.environment_parameters_channel import EnvironmentParametersChannel
+import pickle
 
 
 
@@ -21,8 +22,14 @@ def get_env(file_name, no_graphics, training, config):
         parameter_channel.set_float_parameter(key=k, value=config["rewards"][k])
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters(width=800, height=800, quality_level=1, time_scale=20. if training else 1.,
+
+    if training:    
+        engine_config_channel.set_configuration_parameters(width=800, height=800, quality_level=1,time_scale=20.,
                                                  target_frame_rate=-1, capture_frame_rate=60)
+    else:
+        engine_config_channel.set_configuration_parameters(width=800, height=800, quality_level=1,
+                                                 target_frame_rate=-1, capture_frame_rate=60)
+         
     if file_name is None:
         print("Start game in Unity..")
     else:
@@ -142,6 +149,9 @@ if __name__ =="__main__":
     parser.add_argument('--model_step', default="", type=str)
     parser.add_argument('--on_unity', default="", type = str)
     parser.add_argument("--hidden_neurons", default=256, type=int)
+    parser.add_argument("--resume_model", default="", type=str)
+
+
 
     args = parser.parse_args()
 
@@ -219,6 +229,8 @@ if __name__ =="__main__":
     
     '''
 
+    resume_model = True if args.resume_model != "" else False
+
     if training:
 
         env, number_of_agents, observation_size, info = get_env(file_name, True, training, config)
@@ -226,6 +238,11 @@ if __name__ =="__main__":
         infos += info
 
         print_log_info(folder + "//model//" + env_name + identifier, infos)
+
+        if resume_model:
+            with open(f"{folder}//model//{args.env_name}//FirstRun//model", "rb") as f:
+                agent = pickle.load(f)
+                agent.epsilon = 0.5
 
         agent = DQN(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons) if using_discrete else\
                 DDPG(nb_states = observation_size, nb_actions = action_size, n_agents = number_of_agents, max_iterations=num_iterations, hidden_neurons = args.hidden_neurons)

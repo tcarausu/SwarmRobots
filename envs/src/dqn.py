@@ -8,73 +8,42 @@ from torch.optim import Adam
 from .model import Actor
 from .memory import SequentialMemory
 from .util import *
+from .DRLAlgo import DRLAlgo
 from mlagents_envs.environment import ActionTuple
 
 import os
 
 criterion = nn.SmoothL1Loss()
 
-class DQN(object):
+class DQN(DRLAlgo):
     def __init__(self, nb_states, nb_actions, n_agents, max_iterations, hidden_neurons, enable_double_q=True):
 
         
-        self.nb_states = nb_states
-        self.nb_actions= nb_actions
-        self.n_agents = n_agents
-        self.max_iterations = max_iterations
+        super().__init__(nb_states, nb_actions, n_agents, hidden_neurons, max_iterations)
 
-        self.hidden1 = hidden_neurons
-        self.hidden2 = hidden_neurons
-        self.init_w = 0.003
-
+       
         self.rmsize = 300_000
         self.window_length = 1
 
         self.batch_size =64
-        self.tau = 0.001
         self.discount = 0.99
         self.depsilon = 1.0 / max_iterations
 
-        self.is_training = True
-
-        self.recent_state = {}
-        self.recent_action = {}
-
         self.target_update_freq = 5
-
         self.enable_double_q = enable_double_q
 
-
         self.prate = 0.0001
-        # self.rate = 0.001
-        
-        # self.ou_theta = 0.15
-        # self.ou_mu = 0.0
-        # self.ou_sigma = 0.2
 
-        net_cfg = {
-            'hidden1':self.hidden1, 
-            'hidden2':self.hidden2, 
-            'init_w':self.init_w
-        }
-        self.network = Actor(self.nb_states, self.nb_actions, **net_cfg, is_actor=False)
-        self.network_target = Actor(self.nb_states, self.nb_actions, **net_cfg, is_actor=False)
+        self.network = Actor(self.nb_states, self.nb_actions, **self.net_cfg, is_actor=False)
+        self.network_target = Actor(self.nb_states, self.nb_actions, **self.net_cfg, is_actor=False)
         self.optimizer  = Adam(self.network.parameters(), lr=self.prate)
 
         hard_update(self.network_target, self.network) # Make sure target is with the same weight
         
-        #Create replay buffer
-        self.memory = SequentialMemory(limit=self.rmsize, window_length=self.window_length)
-
         self.epsilon = 1.0
 
-        # if USE_CUDA: self.cuda()
-
-    def initialize_states_actions(self, decision_steps):
-        for agent_id in decision_steps:
-            self.recent_state[agent_id] = None
-            self.recent_action[agent_id] = None
-        
+        self.memory = SequentialMemory(limit=self.rmsize, window_length=self.window_length)
+   
 
     def update_policy(self, iteration):
         state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = self.memory.sample_and_split(self.batch_size)
@@ -133,17 +102,13 @@ class DQN(object):
         self.critic.cuda()
         self.critic_target.cuda()
 
-    def observe(self, agent_id, r_t, s_t1, done):
-        if self.is_training:
-            self.memory.append(self.recent_state[agent_id], self.recent_action[agent_id], r_t, done)
-            self.update_obs(agent_id,s_t1)
+    
 
     def random_action(self):
         action = np.random.randint(low=0, high=self.nb_actions,size=(self.n_agents,1))
         self.update_recent_actions(action)
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
-
         return action_tuple
 
 
@@ -164,16 +129,6 @@ class DQN(object):
 
         return action_tuple
         
-    
-    def update_recent_actions(self, action):
-        i = 0
-        for agent_id in self.recent_action:
-            self.recent_action[agent_id] = action[i,:]
-            i += 1
-
-    def update_obs(self, agent, obs):
-        self.recent_state[agent] = obs
-        
 
     def load_weights(self, file_to_save,identifier,env_name, step_to_resume):
         file_to_save += "//data//"  + env_name +"//" + identifier
@@ -191,7 +146,6 @@ class DQN(object):
             '{}/network_{}_{}.pkl'.format(file_to_save,env + identifier[2:-2], step)
         )
 
-    def reset_random_process(self):
-        pass
+    
     
     
