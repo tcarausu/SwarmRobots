@@ -35,7 +35,6 @@ public class Test : Agent
         Distance,
         FreeCommunication,
         Position
-        //TargetPosition
     }
 
     private List<string> commList;
@@ -229,9 +228,7 @@ public class Test : Agent
 
         if (CommunicationMode.Contains(Communication.Distance))
             for(int i = 0; i < CommunicationSpots; i++)
-            {
                 communicationMap[i + "distance"] = otherAgentsDistance[i].distance;
-            }
             
 
         if (CommunicationMode.Contains(Communication.Position))
@@ -248,13 +245,8 @@ public class Test : Agent
         }
 
         if (CommunicationMode.Contains(Communication.FreeCommunication))
-        {
-            
             for (int i = 0; i < CommunicationSpots; i++)
-            {
                 communicationMap[i + "freeCommunication"] = otherAgents[i].AskForFreeCommunication();
-            }
-        }
             
 
         //The only observation is the raycast if communication is not used
@@ -348,7 +340,6 @@ public class Test : Agent
         CheckTargetProximity();
 
         moves++;
-
 
         if (moves >= maxMoves)
         {

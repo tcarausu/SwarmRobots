@@ -17,6 +17,19 @@ enum DiscreteCommands
     Right,
 }
 
+struct AgentDistances
+{
+    public WalkerAgentMulti agent;
+    public float distance;
+
+    public AgentDistances(WalkerAgentMulti agent, float distance) : this()
+    {
+        this.agent = agent;
+        this.distance = distance;
+    }
+    public void SetDistanceFrom(Vector3 point) { this.distance = Vector3.Distance(agent.transform.localPosition, point); }
+}
+
 public class WalkerAgentMulti : Agent
 {
     public enum Movement
@@ -56,10 +69,14 @@ public class WalkerAgentMulti : Agent
     private float targetReward = 1;
     private float nearTargetReward = 0.002f;
 
+    // Communication
     private Dictionary<string, float> communicationMap;
+    private readonly int CommunicationSpots = 3;
+    private float LastFreeComm = 0;
 
     private Transform Swarm;
     private List<WalkerAgentMulti> otherAgents;
+    private List<AgentDistances> otherAgentsDistance;
     private Transform Target;
     private SpawnAreas TargetSpawnAreas;
 
@@ -74,7 +91,7 @@ public class WalkerAgentMulti : Agent
     private float length; // Since the agent is a cube edge length on the x is supposed to be length on y and z too
 
     [Header("The changing maze object in the same area as the agent")]
-    public GameObject TrainingArea;
+    public GameObject Mazes;
     [Tooltip("Set this to true if the area of the agent can change maze")]
     public bool hasRandomMaze;
     private Transform _activeMaze;
@@ -109,12 +126,11 @@ public class WalkerAgentMulti : Agent
 
         if (hasRandomMaze)
         {
-
-            _activeMaze = TrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            _activeMaze = Mazes.GetComponent<SelectRandomMaze>().getActiveMaze();
             Goal = _activeMaze.Find("GOAL");
         }
         else
-            Goal = TrainingArea.transform.Find("GOAL");
+            Goal = Mazes.transform.Find("GOAL");
 
         TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
         Target = Goal.Find("Target");
@@ -122,36 +138,41 @@ public class WalkerAgentMulti : Agent
         otherAgents = new List<WalkerAgentMulti>(Swarm.GetComponentsInChildren<WalkerAgentMulti>());
         otherAgents.Remove(this);
 
+        otherAgentsDistance = new List<AgentDistances>();
+        foreach (var agent in otherAgents)
+            otherAgentsDistance.Add(new AgentDistances(agent, 0));
+
         int obsSize = 0;
         communicationMap = new Dictionary<string, float>();
         //Initialize the communication data structure
         if (CommunicationMode.Contains(Communication.Distance))
         {
-            obsSize += otherAgents.Count;
-            foreach (var agent in otherAgents)
-                communicationMap.Add(agent.name + "distance", 0);
+            obsSize += CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap.Add(i + "distance", -1);
         }
+
         if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
-            obsSize += otherAgents.Count;
-            foreach (var agent in otherAgents)
-                communicationMap.Add(agent.name + "freeCommunication", 0);
+            obsSize += CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap.Add(i + "freeCommunication", 0);
         }
         if (CommunicationMode.Contains(Communication.Position))
         {
-            obsSize += 2 * otherAgents.Count;
-            foreach (var agent in otherAgents)
-            {
-                communicationMap.Add(agent.name + "position_x", 0);
-                communicationMap.Add(agent.name + "position_z", 0);
-            }
-
+            //My position
             obsSize += 2;
-            communicationMap.Add(name + "position_x", 0);
-            communicationMap.Add(name + "position_z", 0);
+            communicationMap.Add("My_position_x", 0);
+            communicationMap.Add("My_position_z", 0);
+
+            obsSize += 2 * CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
+            {
+                communicationMap.Add(i + "position_x", 0);
+                communicationMap.Add(i + "position_z", 0);
+            }
         }
 
-       
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -205,54 +226,58 @@ public class WalkerAgentMulti : Agent
         Target.localPosition = TargetSpawnAreas.GetRndPosition();
     }
 
-    public void Communicate(string id, float message)
+    public float AskForFreeCommunication()
     {
-        communicationMap[id] = message;
+        return LastFreeComm;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        ComputeDistances();
+        otherAgentsDistance.Sort((x, y) => x.distance.CompareTo(y.distance));
+
+        CheckNearAgents();
+
         if (CommunicationMode.Contains(Communication.Distance))
-            CheckNearAgentsAndUpdateCommunication();
-        else
-            CheckNearAgents();
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap[i + "distance"] = otherAgentsDistance[i].distance;
 
 
-        if (CommunicationMode.Contains(Communication.Position)){
+        if (CommunicationMode.Contains(Communication.Position))
+        {
+            communicationMap["My_position_x"] = transform.localPosition.x;
+            communicationMap["My_position_z"] = transform.localPosition.z;
 
-            foreach (var agent in otherAgents)
+            for (int i = 0; i < CommunicationSpots; i++)
             {
-                communicationMap[agent.name + "position_x"] = agent.transform.localPosition.x;
-                communicationMap[agent.name + "position_z"] = agent.transform.localPosition.z;
+                communicationMap[i + "position_x"] = otherAgentsDistance[i].agent.transform.localPosition.x;
+                communicationMap[i + "position_z"] = otherAgentsDistance[i].agent.transform.localPosition.z;
             }
 
-            communicationMap[name + "position_x"] = transform.localPosition.x;
-            communicationMap[name + "position_z"] = transform.localPosition.z;
-
         }
+
+        if (CommunicationMode.Contains(Communication.FreeCommunication))
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap[i + "freeCommunication"] = otherAgents[i].AskForFreeCommunication();
+
 
         //The only observation is the raycast if communication is not used
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
-        
+
+
     }
 
-    //private void CommunicateTargetPosition()
-    //{
-    //    foreach (WalkerAgentMulti agent in otherAgents)
-    //    {
-    //        agent.Communicate("targetx", Target.localPosition.x);
-    //        agent.Communicate("targetz", Target.localPosition.z);
-    //    }
-    //}
+    private void ComputeDistances()
+    {
+        foreach (var agent in otherAgentsDistance)
+            agent.SetDistanceFrom(transform.localPosition);
+    }
 
     private bool reachedGoal;
 
-    public void ReachGoal()
-    {
-        reachedGoal = true;
-    }
+    public void ReachGoal() {   reachedGoal = true;    }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -319,14 +344,11 @@ public class WalkerAgentMulti : Agent
 
         CheckTargetProximity();
 
-        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
             int messageIndex = actionBuffers.ContinuousActions.Length - 1;
-            foreach (WalkerAgentMulti agent in otherAgents)
-            {
-                float message = actionBuffers.ContinuousActions[messageIndex];
-                agent.Communicate(name + "freeCommunication", message);
-            }
+            float message = actionBuffers.ContinuousActions[messageIndex];
+            LastFreeComm = message;
         }
     }
 
@@ -335,11 +357,7 @@ public class WalkerAgentMulti : Agent
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
             if (hit.collider.name.Equals(Target.name))
-            {
                 AddReward((1 / hit.distance) * nearTargetReward);
-                //if (CommunicationMode.Equals(Communication.TargetPosition))
-                //    CommunicateTargetPosition();
-            }
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
@@ -364,7 +382,7 @@ public class WalkerAgentMulti : Agent
 
         if (hasRandomMaze)
         {
-            _activeMaze = TrainingArea.GetComponent<SelectRandomMaze>().getActiveMaze();
+            _activeMaze = Mazes.GetComponent<SelectRandomMaze>().getActiveMaze();
             Goal = _activeMaze.Find("GOAL");
             TargetSpawnAreas = Goal.Find("SpawnAreas").gameObject.GetComponent<SpawnAreas>();
             Target = Goal.Find("Target");
@@ -383,26 +401,6 @@ public class WalkerAgentMulti : Agent
             if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
                 if (hit.collider.name.Equals(agent.name))
                     AddReward(-(1 / hit.distance) * nearAgentPenalty);
-        }
-    }
-
-    // Near agent penalty and update communicationList
-    private void CheckNearAgentsAndUpdateCommunication()
-    {
-        Vector3 dir;
-        foreach (Agent agent in otherAgents)
-        {
-            dir = (agent.transform.position - transform.position).normalized;
-            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
-            {
-                if (hit.collider.name.Equals(agent.name))
-                {
-                    AddReward(-(1 / hit.distance) * nearAgentPenalty);
-                    communicationMap[agent.name + "distance"] = hit.distance;
-                }
-                else
-                    communicationMap[agent.name + "distance"] = 0;
-            }
         }
     }
 
@@ -430,7 +428,7 @@ public class WalkerAgentMulti : Agent
                 break;
         }
 
-        if (CommunicationMode.Equals(Communication.FreeCommunication))
+        if (CommunicationMode.Contains(Communication.FreeCommunication))
             continuousActionsOut[continuousActionsOut.Length - 1] = 0;
     }
 }
