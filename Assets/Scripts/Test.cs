@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
+
 
 public class Test : Agent
 {
@@ -20,15 +23,16 @@ public class Test : Agent
         Absent,
         Distance,
         FreeCommunication,
-        TargetPosition
+        Position
+        //TargetPosition
     }
 
     private List<string> commList;
+
     public List<Communication> CommunicationMode;
     public Movement movementMode;
     public float playerSpeed = 10;
     public float rotationSensitivity = 10;
-    public bool ownPositionAsObservation;
 
     [Header("Rewards")]
     public float existenctialPenalty = 0.001f;
@@ -43,6 +47,10 @@ public class Test : Agent
     public float targetReward = 1;
     public float nearTargetReward = 0.01f;
 
+    public string modelName = "";
+
+    private bool reachedGoal;
+
     private Dictionary<string, float> communicationMap;
 
     private Transform Swarm;
@@ -53,13 +61,17 @@ public class Test : Agent
     private List<Checkpoint> clearedCheckpoints;
     private Vector3 initialPosition;
 
+    private TargetTestScript targetComponent;
+
     [Header("Test parameters")]
-    public List<Vector3> TargetPositions;
+    
     private int testNumber = 0;
     private System.DateTime startTime;
     public int maxMoves;
     private int moves = 0;
     private float totalReward;
+
+    
 
     void Start()
     {
@@ -72,6 +84,9 @@ public class Test : Agent
         Transform Goal = Swarm.parent.Find("GOAL");
         Target = Goal.Find("Target");
 
+        targetComponent = Target.GetComponent<TargetTestScript>();
+
+        //MoveTarget();
         otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
         otherAgents.Remove(this);
 
@@ -84,21 +99,27 @@ public class Test : Agent
             foreach (var agent in otherAgents)
                 communicationMap.Add(agent.name + "distance", 0);
         }
+
         if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
             obsSize += otherAgents.Count;
             foreach (var agent in otherAgents)
                 communicationMap.Add(agent.name + "freeCommunication", 0);
         }
-        if (CommunicationMode.Contains(Communication.TargetPosition))
+        if (CommunicationMode.Contains(Communication.Position))
         {
+            obsSize += 2 * otherAgents.Count;
+            foreach (var agent in otherAgents)
+            {
+                communicationMap.Add(agent.name + "position_x", 0);
+                communicationMap.Add(agent.name + "position_z", 0);
+            }
+
             obsSize += 2;
-            communicationMap.Add("targetx", 0);
-            communicationMap.Add("targetz", 0);
+            communicationMap.Add(name + "position_x", 0);
+            communicationMap.Add(name + "position_z", 0);
         }
 
-        if (ownPositionAsObservation)
-            obsSize += 2;
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -110,6 +131,8 @@ public class Test : Agent
         startTime = System.DateTime.UtcNow;
         moves = 0;
         totalReward = 0;
+
+        targetComponent.initDirectory(modelName);                                    
     }
 
     private new void AddReward(float reward)
@@ -143,12 +166,14 @@ public class Test : Agent
         clearedCheckpoints.Clear();
 
         ResetPosition();
-        testNumber++;
+        testNumber++; //starts from 1
 
-        if (testNumber - 1 == TargetPositions.Count)
+
+        if (testNumber - 1 == targetComponent.getTotalPositions())  //true when we have gone through all target positions. -1 is needed since testNumber starts from 1
         {
+            targetComponent.saveTimeToTarget(modelName); //print to file time values
             Application.Quit();
-            // UnityEditor.EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
         }
 
         startTime = System.DateTime.UtcNow;
@@ -163,8 +188,12 @@ public class Test : Agent
     private void MoveTarget()
     {
         // Move the target to a new spot
-        if (testNumber - 1 < TargetPositions.Count)
-            Target.localPosition = TargetPositions[testNumber - 1];
+        if (testNumber - 1 < targetComponent.getTotalPositions()) { 
+            //Target.localPosition = TargetPositions[testNumber - 1];
+            Target.localPosition = targetComponent.getTargetPosition();
+        }
+       
+
         reachedGoal = false;
     }
 
@@ -185,24 +214,25 @@ public class Test : Agent
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
-        if (ownPositionAsObservation)
+        if (CommunicationMode.Contains(Communication.Position))
         {
-            sensor.AddObservation(transform.localPosition.x);
-            sensor.AddObservation(transform.localPosition.z);
+
+            foreach (var agent in otherAgents)
+            {
+                communicationMap[agent.name + "position_x"] = agent.transform.localPosition.x;
+                communicationMap[agent.name + "position_z"] = agent.transform.localPosition.z;
+            }
+
+            communicationMap[name + "position_x"] = transform.localPosition.x;
+            communicationMap[name + "position_z"] = transform.localPosition.z;
+
         }
 
     }
 
-    private bool reachedGoal;
+
     public void ReachGoal() { reachedGoal = true; }
-    private void CommunicateTargetPosition()
-    {
-        foreach (Test agent in otherAgents)
-        {
-            agent.Communicate("targetx", Target.localPosition.x);
-            agent.Communicate("targetz", Target.localPosition.z);
-        }
-    }
+
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         switch (movementMode)
@@ -259,12 +289,18 @@ public class Test : Agent
 
         if (reachedGoal)
         {
+            
             Debug.Log(name + " Reached Target in test number " + testNumber);
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
-            Debug.Log("Time needed to reach: " + (ts.TotalMilliseconds / 1000.0f).ToString() + "  ---  Total reward = " + totalReward);
+            string time = (ts.TotalMilliseconds / 1000.0f).ToString();
+            Debug.Log("Time needed to reach: " + time + "  ---  Total reward = " + totalReward);
+
+            targetComponent.registerTime(time);
+
             //printLog();
             //foreach (Test agent in otherAgents)
             //    agent.printLog();
+
             ReachedTarget();
             return;
         }
@@ -274,10 +310,13 @@ public class Test : Agent
         CheckTargetProximity();
 
         moves++;
+
+
         if (moves >= maxMoves)
         {
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
             Debug.Log("Failed test number " + testNumber + " after " + (ts.TotalMilliseconds / 1000.0f).ToString() + " seconds" + "  ---  Total reward = " + totalReward);
+            targetComponent.registerTime("200,0"); //default value. if it doesn't reach the target, we set time to 0
             ReachedTarget();
             return;
         }
@@ -298,7 +337,7 @@ public class Test : Agent
 
     private void printLog()
     {
-        System.IO.File.WriteAllLines("Communication_" + name + ".txt", commList);
+        File.WriteAllLines("Communication_" + name + ".txt", commList);
     }
 
     private void CheckTargetProximity()
@@ -308,8 +347,6 @@ public class Test : Agent
             if (hit.collider.name.Equals(Target.name))
             {
                 AddReward((1 / hit.distance) * nearTargetReward);
-                if (CommunicationMode.Contains(Communication.TargetPosition))
-                    CommunicateTargetPosition();
             }
     }
 
