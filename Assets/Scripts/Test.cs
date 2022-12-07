@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Unity.MLAgents;
@@ -8,6 +7,18 @@ using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 
+struct AgentDistance
+{
+    public Test agent;
+    public float distance;
+
+    public AgentDistance(Test agent, float distance) : this()
+    {
+        this.agent = agent;
+        this.distance = distance;
+    }
+    public void SetDistanceFrom(Vector3 point) { this.distance = Vector3.Distance(agent.transform.localPosition, point); }
+}
 
 public class Test : Agent
 {
@@ -52,9 +63,13 @@ public class Test : Agent
     private bool reachedGoal;
 
     private Dictionary<string, float> communicationMap;
+    private readonly int CommunicationSpots = 3;
+    private float LastFreeComm = 0;
+
 
     private Transform Swarm;
     private List<Test> otherAgents;
+    private List<AgentDistance> otherAgentsDistance;
     private Transform Target;
 
     private CharacterController controller;
@@ -64,13 +79,12 @@ public class Test : Agent
     private TargetTestScript targetComponent;
 
     [Header("Test parameters")]
-    
+
     private int testNumber = 0;
     private System.DateTime startTime;
     public int maxMoves;
     private int moves = 0;
     private float totalReward;
-
     
 
     void Start()
@@ -86,38 +100,44 @@ public class Test : Agent
 
         targetComponent = Target.GetComponent<TargetTestScript>();
 
-        //MoveTarget();
         otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
         otherAgents.Remove(this);
+
+        otherAgentsDistance = new List<AgentDistance>();
+        foreach (var agent in otherAgents)
+            otherAgentsDistance.Add(new AgentDistance(agent, 0));
 
         int obsSize = 0;
         communicationMap = new Dictionary<string, float>();
         //Initialize the communication data structure
         if (CommunicationMode.Contains(Communication.Distance))
         {
-            obsSize += otherAgents.Count;
-            foreach (var agent in otherAgents)
-                communicationMap.Add(agent.name + "distance", 0);
+            obsSize += CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap.Add(i + "distance", -1);
         }
 
         if (CommunicationMode.Contains(Communication.FreeCommunication))
         {
-            obsSize += otherAgents.Count;
-            foreach (var agent in otherAgents)
-                communicationMap.Add(agent.name + "freeCommunication", 0);
+            obsSize += CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
+                communicationMap.Add(i + "freeCommunication", 0);
         }
         if (CommunicationMode.Contains(Communication.Position))
         {
-            obsSize += 2 * otherAgents.Count;
-            foreach (var agent in otherAgents)
+            //My position
+            obsSize += 2;
+            communicationMap.Add("My_position_x", 0);
+            communicationMap.Add("My_position_z", 0);
+
+            obsSize += 2 * CommunicationSpots;
+            for (int i = 0; i < CommunicationSpots; i++)
             {
-                communicationMap.Add(agent.name + "position_x", 0);
-                communicationMap.Add(agent.name + "position_z", 0);
+                communicationMap.Add(i + "position_x", 0);
+                communicationMap.Add(i + "position_z", 0);
             }
 
-            obsSize += 2;
-            communicationMap.Add(name + "position_x", 0);
-            communicationMap.Add(name + "position_z", 0);
+  
         }
 
 
@@ -168,8 +188,8 @@ public class Test : Agent
         ResetPosition();
         testNumber++; //starts from 1
 
-
-        if (testNumber - 1 == targetComponent.getTotalPositions())  //true when we have gone through all target positions. -1 is needed since testNumber starts from 1
+        //true when we have gone through all target positions. -1 is needed since testNumber starts from 1
+        if (testNumber - 1 == targetComponent.getTotalPositions())  
         {
             targetComponent.saveTimeToTarget(modelName); //print to file time values
             Application.Quit();
@@ -189,47 +209,65 @@ public class Test : Agent
     {
         // Move the target to a new spot
         if (testNumber - 1 < targetComponent.getTotalPositions()) { 
-            //Target.localPosition = TargetPositions[testNumber - 1];
             Target.localPosition = targetComponent.getTargetPosition();
         }
        
-
         reachedGoal = false;
     }
 
-    public void Communicate(string id, float message)
+    public float AskForFreeCommunication()
     {
-        communicationMap[id] = message;
+        return LastFreeComm;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        ComputeDistances();
+        otherAgentsDistance.Sort((x, y) => x.distance.CompareTo(y.distance));
+
+        CheckNearAgents();
 
         if (CommunicationMode.Contains(Communication.Distance))
-            CheckNearAgentsAndUpdateCommunication();
-        else
-            CheckNearAgents();
+            for(int i = 0; i < CommunicationSpots; i++)
+            {
+                communicationMap[i + "distance"] = otherAgentsDistance[i].distance;
+            }
+            
+
+        if (CommunicationMode.Contains(Communication.Position))
+        {
+            communicationMap["My_position_x"] = transform.localPosition.x;
+            communicationMap["My_position_z"] = transform.localPosition.z;
+
+            for (int i = 0; i < CommunicationSpots; i++)
+            {
+                communicationMap[i + "position_x"] = otherAgentsDistance[i].agent.transform.localPosition.x;
+                communicationMap[i + "position_z"] = otherAgentsDistance[i].agent.transform.localPosition.z;
+            }
+
+        }
+
+        if (CommunicationMode.Contains(Communication.FreeCommunication))
+        {
+            
+            for (int i = 0; i < CommunicationSpots; i++)
+            {
+                communicationMap[i + "freeCommunication"] = otherAgents[i].AskForFreeCommunication();
+            }
+        }
+            
 
         //The only observation is the raycast if communication is not used
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
-        if (CommunicationMode.Contains(Communication.Position))
-        {
-
-            foreach (var agent in otherAgents)
-            {
-                communicationMap[agent.name + "position_x"] = agent.transform.localPosition.x;
-                communicationMap[agent.name + "position_z"] = agent.transform.localPosition.z;
-            }
-
-            communicationMap[name + "position_x"] = transform.localPosition.x;
-            communicationMap[name + "position_z"] = transform.localPosition.z;
-
-        }
-
     }
 
+    private void ComputeDistances()
+    {
+        foreach (var agent in otherAgentsDistance)
+            agent.SetDistanceFrom(transform.localPosition);
+    }
 
     public void ReachGoal() { reachedGoal = true; }
 
@@ -326,16 +364,13 @@ public class Test : Agent
             int messageIndex = actionBuffers.ContinuousActions.Length - 1;
             float message = actionBuffers.ContinuousActions[messageIndex];
             commList.Add(message.ToString());
-            foreach (Test agent in otherAgents)
-            {
-                agent.Communicate(name + "freeCommunication", message);
-            }
+            LastFreeComm = message;
         }
-        printLog();
+        // PrintLog();
 
     }
 
-    private void printLog()
+    private void PrintLog()
     {
         File.WriteAllLines("Communication_" + name + ".txt", commList);
     }
@@ -345,9 +380,8 @@ public class Test : Agent
         Vector3 dir = (Target.position - transform.position).normalized;
         if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
             if (hit.collider.name.Equals(Target.name))
-            {
                 AddReward((1 / hit.distance) * nearTargetReward);
-            }
+
     }
 
     // Set the reward of all agents to 1, End the episode and move the target
@@ -364,7 +398,7 @@ public class Test : Agent
         MoveTarget();
     }
 
-    // If the agents are on sigth add the negative reward, otherwise 0,
+    // If the agents are on sigth add the negative reward, otherwise nothing
     private void CheckNearAgents()
     {
         Vector3 dir;
@@ -374,26 +408,6 @@ public class Test : Agent
             if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
                 if (hit.collider.name.Equals(agent.name))
                     AddReward(-(1 / hit.distance) * nearAgentPenalty);
-        }
-    }
-
-    // Near agent penalty and update communicationList
-    private void CheckNearAgentsAndUpdateCommunication()
-    {
-        Vector3 dir;
-        foreach (Agent agent in otherAgents)
-        {
-            dir = (agent.transform.position - transform.position).normalized;
-            if (Physics.Raycast(transform.position, dir, out RaycastHit hit))
-            {
-                if (hit.collider.name.Equals(agent.name))
-                {
-                    AddReward(-(1 / hit.distance) * nearAgentPenalty);
-                    communicationMap[agent.name + "distance"] = hit.distance;
-                }
-                else
-                    communicationMap[agent.name + "distance"] = 0;
-            }
         }
     }
 
