@@ -1,0 +1,54 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1670395527",
+        "python_version": "3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "D:\\venv_python\\unityVenv\\Scripts\\mlagents-learn config/OurConfig/multiagent128.yaml --env=4agentPseudoRandomPositionFree/SwarmRobots --run-id=4agentRandomPosFree --no-graphics --resume",
+        "mlagents_version": "0.29.0",
+        "mlagents_envs_version": "0.29.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.7.1+cu110",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1670395535"
+    },
+    "total": 8.6692869,
+    "count": 1,
+    "self": 0.2887304999999998,
+    "children": {
+        "run_training.setup": {
+            "total": 0.17064060000000048,
+            "count": 1,
+            "self": 0.17064060000000048
+        },
+        "TrainerController.start_learning": {
+            "total": 8.2099158,
+            "count": 1,
+            "self": 0.00010630000000055873,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 7.0921912,
+                    "count": 1,
+                    "self": 7.0921912
+                },
+                "trainer_threads": {
+                    "total": 7.999999986907369e-07,
+                    "count": 1,
+                    "self": 7.999999986907369e-07
+                },
+                "TrainerController._save_models": {
+                    "total": 1.1176174999999997,
+                    "count": 1,
+                    "self": 0.004707299999999748,
+                    "children": {
+                        "RLTrainer._checkpoint": {
+                            "total": 1.1129102,
+                            "count": 1,
+                            "self": 1.1129102
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
