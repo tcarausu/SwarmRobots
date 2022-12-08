@@ -24,14 +24,13 @@ public class TargetTestScript : MonoBehaviour
         count += 1;
 
         Transform tExploCheckpoints = transform.parent.parent.Find("ExplorationCheckpoints");
-        expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();                                                      
-
+        expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();
     }
 
     public Vector3 getTargetPosition()
     {
         expCheckController.restart();
-        Vector3 newPos = TargetPositions[count];
+        Vector3 newPos = TargetPositions[count % TargetPositions.Count];
         count += 1;
         return newPos;
     }
@@ -49,10 +48,11 @@ public class TargetTestScript : MonoBehaviour
 
     public void saveTimeToTarget(string modelName)
     {
+        expCheckController.restart();
         File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", TimeToTarget);
         expCheckController.saveExplorationRate(modelName, trainingAreaName);
+        TimeToTarget.Clear();
     }
-
 
     public void initDirectory(string modelName)
     {

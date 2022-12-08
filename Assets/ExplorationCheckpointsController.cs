@@ -11,7 +11,6 @@ public class ExplorationCheckpointsController : MonoBehaviour
     private int total;
     private Component[] myCheckpoints;
     private string path = "OurModels/ExplorationRate/";
-    private bool saved = false;
 
     private List<string> rates;
 
@@ -39,11 +38,13 @@ public class ExplorationCheckpointsController : MonoBehaviour
 
     public void saveExplorationRate(string modelName,string trainingAreaName)
     {
-        if (!saved) {  //this check is needed because this function is called by all agents when they realize the 3 targets have all been found.
-            saved = true;   
-            addRate();
-            File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", rates);
-        }
+        // This check is needed because this function is called by all agents when
+        // they realize the 3 targets have all been found.
+          
+        addRate();
+        File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", rates);
+        rates.Clear();
+
     }
 
     public void initDirectory(string modelName)

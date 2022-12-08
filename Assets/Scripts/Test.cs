@@ -37,6 +37,18 @@ public class Test : Agent
         Position
     }
 
+    public string CommToString(Communication comm)
+    {
+        return comm switch
+        {
+            Communication.Absent => "",
+            Communication.Distance => "Distance",
+            Communication.FreeCommunication => "Free",
+            Communication.Position => "Position",
+            _ => "",
+        };
+    }
+
     private List<string> commList;
 
     public List<Communication> CommunicationMode;
@@ -84,32 +96,25 @@ public class Test : Agent
     public int maxMoves;
     private int moves = 0;
     private float totalReward;
+    private int numAgents;
 
     private ExplorationCheckpointsController expCheckController;
 
-
-    void Start()
+    new void Awake()
     {
+        base.Awake();
         commList = new List<string>();
         controller = GetComponent<CharacterController>();
         clearedCheckpoints = new List<Checkpoint>();
 
-        Swarm = transform.parent;
-        initialPosition = transform.localPosition;
+        InitSwarmVariables();
+
         Transform Goal = Swarm.parent.Find("GOAL");
         Target = Goal.Find("Target");
 
         targetComponent = Target.GetComponent<TargetTestScript>();
         Transform tExploCheckpoints = Swarm.parent.Find("ExplorationCheckpoints");
         expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();
-
-
-        otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
-        otherAgents.Remove(this);
-
-        otherAgentsDistance = new List<AgentDistance>();
-        foreach (var agent in otherAgents)
-            otherAgentsDistance.Add(new AgentDistance(agent, 0));
 
         int obsSize = 0;
         communicationMap = new Dictionary<string, float>();
@@ -140,10 +145,7 @@ public class Test : Agent
                 communicationMap.Add(i + "position_x", 0);
                 communicationMap.Add(i + "position_z", 0);
             }
-
-  
         }
-
 
         // Since I can't set the size from here I just notify the user
         Debug.Assert(GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize == obsSize,
@@ -151,10 +153,40 @@ public class Test : Agent
         GetComponent<BehaviorParameters>().BrainParameters.VectorObservationSize + " but expected " + obsSize +
         "\nRemember you have Communication set to " + CommunicationMode.ToString());
 
-
         startTime = System.DateTime.UtcNow;
         moves = 0;
         totalReward = 0;
+
+        CommunicationMode.Sort((x, y) => CommToString(x).CompareTo(CommToString(y)));
+        InitModelName();
+    }
+
+    private void InitSwarmVariables()
+    {
+        Swarm = transform.parent;
+        numAgents = Swarm.childCount - 1;
+
+        var oldSwarm = Swarm.parent.Find("Swarm(" + (numAgents - 4) + ")");
+        if (oldSwarm != null)
+            oldSwarm.gameObject.SetActive(false);
+
+        initialPosition = transform.localPosition;
+
+        otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
+        otherAgents.Remove(this);
+        otherAgentsDistance = new List<AgentDistance>();
+        foreach (var agent in otherAgents)
+            otherAgentsDistance.Add(new AgentDistance(agent, 0));
+    }
+
+    private void InitModelName()
+    {
+        
+        modelName = numAgents + "Agents";
+        foreach (Communication comm in CommunicationMode)
+        {
+            modelName += CommToString(comm);
+        }
 
         targetComponent.initDirectory(modelName);
         expCheckController.initDirectory(modelName);
@@ -188,6 +220,8 @@ public class Test : Agent
         foreach (Checkpoint cp in clearedCheckpoints)
             cp.SetActive(true);
 
+        Debug.Log(transform.parent.name);
+
         clearedCheckpoints.Clear();
 
         ResetPosition();
@@ -197,8 +231,20 @@ public class Test : Agent
         if (testNumber - 1 == targetComponent.getTotalPositions())  
         {
             targetComponent.saveTimeToTarget(modelName); //print to file time values
-            Application.Quit();
-            //UnityEditor.EditorApplication.isPlaying = false;
+            if (numAgents == 20)
+            {
+                Application.Quit();
+                UnityEditor.EditorApplication.isPlaying = false;
+            }
+            else
+            {
+                if (Swarm.gameObject.activeSelf)
+                {
+                    var nextSwarm = Swarm.parent.Find("Swarm(" + (numAgents + 4) + ")");
+                    if (nextSwarm != null && !nextSwarm.gameObject.activeSelf)
+                        nextSwarm.gameObject.SetActive(true);
+                }
+            }
         }
 
         startTime = System.DateTime.UtcNow;
