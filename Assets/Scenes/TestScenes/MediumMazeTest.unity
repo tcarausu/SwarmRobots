@@ -33835,7 +33835,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1193368565}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -87.7, y: 1.5, z: 31.2}
+  m_LocalPosition: {x: -40.7, y: 1.5, z: 6.3}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -33931,8 +33931,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TargetPositions:
   - {x: 62, y: 1.5, z: 103}
-  - {x: -87, y: 1.5, z: 31}
-  - {x: -60, y: 1.5, z: -65}
+  - {x: -40.7, y: 1.5, z: 6.3}
+  - {x: 52.6, y: 1.5, z: -113.5}
   trainingAreaName: MediumMazeTest
 --- !u!1001 &1194137293
 PrefabInstance:
