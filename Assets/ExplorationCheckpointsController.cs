@@ -26,9 +26,10 @@ public class ExplorationCheckpointsController : MonoBehaviour
         counter += 1;
     }
 
-    public void restart()
+    public void restart(bool hasToAddRate)
     {
-        addRate();
+        if(hasToAddRate) 
+            addRate();
         counter = 0;
         foreach (ExplorationCheckpoint c in myCheckpoints)
         {
@@ -38,10 +39,7 @@ public class ExplorationCheckpointsController : MonoBehaviour
 
     public void saveExplorationRate(string modelName,string trainingAreaName)
     {
-        // This check is needed because this function is called by all agents when
-        // they realize the 3 targets have all been found.
-          
-        addRate();
+        restart(false);
         File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", rates);
         rates.Clear();
 

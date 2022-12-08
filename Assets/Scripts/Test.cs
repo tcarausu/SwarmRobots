@@ -116,6 +116,8 @@ public class Test : Agent
         Transform tExploCheckpoints = Swarm.parent.Find("ExplorationCheckpoints");
         expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();
 
+        Debug.Log(expCheckController);
+
         int obsSize = 0;
         communicationMap = new Dictionary<string, float>();
         //Initialize the communication data structure
@@ -159,6 +161,8 @@ public class Test : Agent
 
         CommunicationMode.Sort((x, y) => CommToString(x).CompareTo(CommToString(y)));
         InitModelName();
+
+        
     }
 
     private void InitSwarmVariables()
@@ -220,7 +224,6 @@ public class Test : Agent
         foreach (Checkpoint cp in clearedCheckpoints)
             cp.SetActive(true);
 
-        Debug.Log(transform.parent.name);
 
         clearedCheckpoints.Clear();
 
@@ -230,7 +233,7 @@ public class Test : Agent
         //true when we have gone through all target positions. -1 is needed since testNumber starts from 1
         if (testNumber - 1 == targetComponent.getTotalPositions())  
         {
-            targetComponent.saveTimeToTarget(modelName); //print to file time values
+            
             if (numAgents == 20)
             {
                 Application.Quit();
@@ -260,6 +263,14 @@ public class Test : Agent
     {
         // Move the target to a new spot
         if (testNumber - 1 < targetComponent.getTotalPositions()) { 
+            Target.localPosition = targetComponent.getTargetPosition();
+        }
+        else
+        {
+
+            
+            //print to file time values. Called here so that just 1 agents calls it
+            targetComponent.saveTimeToTarget(modelName);
             Target.localPosition = targetComponent.getTargetPosition();
         }
        
@@ -396,8 +407,9 @@ public class Test : Agent
         if (moves >= maxMoves)
         {
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
-            Debug.Log("Failed test number " + testNumber + " after " + (ts.TotalMilliseconds / 1000.0f).ToString() + " seconds" + "  ---  Total reward = " + totalReward);
-            targetComponent.registerTime("200,0"); //default value. if it doesn't reach the target, we set time to 0
+            string timeInSeconds = (ts.TotalMilliseconds / 1000.0f).ToString();
+            Debug.Log("Failed test number " + testNumber + " after " + timeInSeconds + " seconds" + "  ---  Total reward = " + totalReward);
+            targetComponent.registerTime(timeInSeconds); //default value. if it doesn't reach the target, we set time to 0
             ReachedTarget();
             return;
         }

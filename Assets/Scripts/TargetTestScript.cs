@@ -29,7 +29,6 @@ public class TargetTestScript : MonoBehaviour
 
     public Vector3 getTargetPosition()
     {
-        expCheckController.restart();
         Vector3 newPos = TargetPositions[count % TargetPositions.Count];
         count += 1;
         return newPos;
@@ -44,14 +43,15 @@ public class TargetTestScript : MonoBehaviour
     public void registerTime(string time)
     {
         TimeToTarget.Add(time);
+        expCheckController.restart(true);
     }
 
     public void saveTimeToTarget(string modelName)
     {
-        expCheckController.restart();
         File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", TimeToTarget);
         expCheckController.saveExplorationRate(modelName, trainingAreaName);
         TimeToTarget.Clear();
+        count = 0;
     }
 
     public void initDirectory(string modelName)
