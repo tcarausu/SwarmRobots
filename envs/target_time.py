@@ -38,7 +38,7 @@ print(models)
 for model in models: 
     if not model.endswith(end):
         models.remove(model)
-print(models)
+print(models    )
 time_values = list()
 mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
 difficulties = ["Close","Medium","Far"]

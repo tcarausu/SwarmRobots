@@ -198,7 +198,7 @@ public class Test : Agent
         {
             targetComponent.saveTimeToTarget(modelName); //print to file time values
             Application.Quit();
-            UnityEditor.EditorApplication.isPlaying = false;
+            //UnityEditor.EditorApplication.isPlaying = false;
         }
 
         startTime = System.DateTime.UtcNow;

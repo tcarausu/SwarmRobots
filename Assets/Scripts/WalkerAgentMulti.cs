@@ -60,7 +60,8 @@ public class WalkerAgentMulti : Agent
     private float existenctialPenalty = 0.001f;
 
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
-    private float nearAgentPenalty = 0.01f;
+    //private float nearAgentPenalty = 0.01f;
+    private float nearAgentPenalty = 0.0f;
 
     private float hitWallPenalty = 0.01f;
     private float hitAgentPenalty = 0.003f;
