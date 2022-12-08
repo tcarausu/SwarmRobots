@@ -116,8 +116,6 @@ public class Test : Agent
         Transform tExploCheckpoints = Swarm.parent.Find("ExplorationCheckpoints");
         expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();
 
-        Debug.Log(expCheckController);
-
         int obsSize = 0;
         communicationMap = new Dictionary<string, float>();
         //Initialize the communication data structure
