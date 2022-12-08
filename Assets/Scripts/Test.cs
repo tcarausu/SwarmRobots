@@ -84,7 +84,9 @@ public class Test : Agent
     public int maxMoves;
     private int moves = 0;
     private float totalReward;
-    
+
+    private ExplorationCheckpointsController expCheckController;
+
 
     void Start()
     {
@@ -98,6 +100,9 @@ public class Test : Agent
         Target = Goal.Find("Target");
 
         targetComponent = Target.GetComponent<TargetTestScript>();
+        Transform tExploCheckpoints = Swarm.parent.Find("ExplorationCheckpoints");
+        expCheckController = tExploCheckpoints.gameObject.GetComponent<ExplorationCheckpointsController>();
+
 
         otherAgents = new List<Test>(Swarm.GetComponentsInChildren<Test>());
         otherAgents.Remove(this);
@@ -151,7 +156,8 @@ public class Test : Agent
         moves = 0;
         totalReward = 0;
 
-        targetComponent.initDirectory(modelName);                                    
+        targetComponent.initDirectory(modelName);
+        expCheckController.initDirectory(modelName);
     }
 
     private new void AddReward(float reward)

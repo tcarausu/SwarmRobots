@@ -233,8 +233,8 @@ public class WalkerAgentMulti : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        ComputeDistances();
-        otherAgentsDistance.Sort((x, y) => x.distance.CompareTo(y.distance));
+            ComputeDistances();
+            otherAgentsDistance.Sort((x, y) => x.distance.CompareTo(y.distance));
 
         CheckNearAgents();
 
