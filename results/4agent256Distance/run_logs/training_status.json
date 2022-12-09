@@ -1,0 +1,65 @@
+{
+    "WalkerAgentMulti": {
+        "checkpoints": [
+            {
+                "steps": 3830428,
+                "file_path": "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-3830428.onnx",
+                "reward": null,
+                "creation_time": 1670546034.848767,
+                "auxillary_file_paths": [
+                    "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-3830428.pt"
+                ]
+            },
+            {
+                "steps": 3999981,
+                "file_path": "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-3999981.onnx",
+                "reward": 0.33264851570129395,
+                "creation_time": 1670566407.2656357,
+                "auxillary_file_paths": [
+                    "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-3999981.pt"
+                ]
+            },
+            {
+                "steps": 4499956,
+                "file_path": "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-4499956.onnx",
+                "reward": null,
+                "creation_time": 1670568462.348542,
+                "auxillary_file_paths": [
+                    "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-4499956.pt"
+                ]
+            },
+            {
+                "steps": 4999944,
+                "file_path": "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-4999944.onnx",
+                "reward": null,
+                "creation_time": 1670570450.939952,
+                "auxillary_file_paths": [
+                    "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-4999944.pt"
+                ]
+            },
+            {
+                "steps": 5000192,
+                "file_path": "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-5000192.onnx",
+                "reward": 1.0424178093671799,
+                "creation_time": 1670570451.0216203,
+                "auxillary_file_paths": [
+                    "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-5000192.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 5000192,
+            "file_path": "results\\4agent256Distance\\WalkerAgentMulti.onnx",
+            "reward": 1.0424178093671799,
+            "creation_time": 1670570451.0216203,
+            "auxillary_file_paths": [
+                "results\\4agent256Distance\\WalkerAgentMulti\\WalkerAgentMulti-5000192.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.29.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}
