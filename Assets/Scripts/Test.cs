@@ -244,10 +244,13 @@ public class Test : Agent
             
             if (numAgents == 20)
             {
-                Application.Quit();
-#if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-#endif
+                var sceneChanger = GameObject.Find("SceneChanger");
+                var sChangerScript = sceneChanger.GetComponent<SceneChanger>();
+                sChangerScript.EndScene();
+//                Application.Quit();
+//#if UNITY_EDITOR
+//                UnityEditor.EditorApplication.isPlaying = false;
+//#endif
             }
             else
             {
@@ -429,7 +432,7 @@ public class Test : Agent
             int messageIndex = actionBuffers.ContinuousActions.Length - 1;
             float message = actionBuffers.ContinuousActions[messageIndex];
             commList.Add(message.ToString());
-            LastFreeComm = message;
+            LastFreeComm = message + Random.Range(-0.5f,0.5f);
         }
         // PrintLog();
 
