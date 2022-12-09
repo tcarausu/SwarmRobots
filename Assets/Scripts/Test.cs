@@ -161,8 +161,6 @@ public class Test : Agent
 
         CommunicationMode.Sort((x, y) => CommToString(x).CompareTo(CommToString(y)));
         InitModelName();
-
-        
     }
 
     private void InitSwarmVariables()
@@ -247,10 +245,6 @@ public class Test : Agent
                 var sceneChanger = GameObject.Find("SceneChanger");
                 var sChangerScript = sceneChanger.GetComponent<SceneChanger>();
                 sChangerScript.EndScene();
-//                Application.Quit();
-//#if UNITY_EDITOR
-//                UnityEditor.EditorApplication.isPlaying = false;
-//#endif
             }
             else
             {
