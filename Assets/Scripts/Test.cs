@@ -69,7 +69,9 @@ public class Test : Agent
     public float targetReward = 1;
     public float nearTargetReward = 0.01f;
 
-    public string modelName = "";
+    public string customModelName = "";
+
+    private string modelName = "";
 
     private bool reachedGoal;
 
@@ -183,8 +185,16 @@ public class Test : Agent
 
     private void InitModelName()
     {
-        
-        modelName = numAgents + "Agents";
+
+        string s;
+        if (customModelName != "") {
+            s = customModelName;
+        }
+        else
+        {
+            s = "Agents";
+        }
+        modelName = numAgents + s;
         foreach (Communication comm in CommunicationMode)
         {
             modelName += CommToString(comm);

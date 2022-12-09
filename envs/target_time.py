@@ -11,13 +11,13 @@ def sort_by_initial(x):
         number = int(x[:1])
     return number
 
-def norm(row, a = True):
-    if a:
-        return row/200
+def norm(row, respect_to_max_time = True, max_time = 300):
+    if respect_to_max_time:
+        return row / max_time
     else:
         max = np.max(row)
         min = np.min(row)
-        if(max==min):
+        if(max==min): #nobody got to the target
             return pd.array([1 for _ in row])
         return (row-min)/(max-min)
 #_--------------------------------------------------------------------
@@ -25,49 +25,51 @@ def norm(row, a = True):
 
 ##--- data to plot
 
-end = "NoComm"
+# end = ""
+end = "Free"#-->get models without communication
+# end = "Free" #-->get model with free communication
+
 
 ##---
 
 
 os.chdir(os.path.dirname(__file__)) ## go to envs
-os.chdir("..//OurModels")
+os.chdir("..//OurModels//TimeToTarget")
 
 models = os.listdir()
-print(models)
-for model in models: 
-    if not model.endswith(end):
+
+
+for model in models: #get all models in the folder
+    if model.endswith(end): #remove if not in our scope
         models.remove(model)
-print(models    )
+
+print(models)
 time_values = list()
-mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
+# mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
+mazes_names = ["ToyMazeTest", "SmallMazeTest",  "BigMazeTest"]
 difficulties = ["Close","Medium","Far"]
-x_ticks = [name + difficulty for name in mazes_names for difficulty in difficulties]
+
+x_ticks = [name + difficulty for name in mazes_names for difficulty in difficulties] #create a list with maze+target names
 
 
 
-
-
-for model in models:
-    files = os.listdir(model)
+for model in models: #for each model
     model_list = list()
-    for file in mazes_names:
+    for file in mazes_names: #for each maze
         with open(f"{model}//{file}.dat","r") as f:
             for line in f:
-                line = line[:-1] if line[-1]=="\n" else line
-                model_list.append(float(line[:-1].replace(",",".")))
+                line = line[:-1] if line[-1]=="\n" else line #delete '\n' at the end of first n-1 rows
+                model_list.append(float(line[:-1].replace(",","."))) #save number as float (c# saves float with comma)
     time_values.append(model_list)
 
-#sort models by swarm size. since each name is associated to a list, we have to do this trick
+#sort models by swarm size. since each name is associated to a list, we have to do this
 time_values, models = zip(*sorted(zip(time_values, models), key=lambda x: sort_by_initial(x[1]))) 
-
 
 
 plt.title("Comparison between agents without communication")
 
 for i in range(len(models)):
-    # print(models[i], time_values[i])
-    plt.plot(time_values[i], label = models[i])
+    plt.plot(time_values[i], label = models[i]) 
 
 
 plt.xticks(range(len(x_ticks)), x_ticks , size='xx-small', rotation = 45)
@@ -78,11 +80,11 @@ plt.legend()
 
 
 #---------------------------------------
-
+#transpose time_values so that models are on the columns and targets on rows
 df = pd.DataFrame(np.array(time_values).T, columns=models,index=x_ticks)
 
 print(df)
-df_normalized = df.apply(norm, axis = 1)
+df_normalized = df.apply(norm, axis = 1) #normalize rows
 
 mean_df = pd.DataFrame({
     "models" : models,
@@ -100,7 +102,7 @@ plt.ylabel("Normalized mean")
 
 # fig,ax = plt.subplots(1,1)
 plt.figure()
-sns.violinplot(data=df)
+sns.boxplot(data=df)
 
 
 # 4 and 8 are skewed towards right which is a bad thing
@@ -108,12 +110,13 @@ sns.violinplot(data=df)
 #---------------------------------------
 
 
-fig, axes = plt.subplots(2,2, figsize=(6,6))
+fig, axes = plt.subplots(1,len(mazes_names))
 fig.tight_layout(pad=5.0)
 
 axs = axes.flatten()
 
-df_t = df.transpose()
+#here we want to plot times needed to complete each target. so we have to transpose again the dataframe so that columns are targets.
+df_t = df.transpose() 
 print(df_t)
 
 for i, (maze, ax) in enumerate(zip(mazes_names, axs)):
