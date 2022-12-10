@@ -11,7 +11,6 @@ from mlagents_envs.side_channel.environment_parameters_channel import Environmen
 import pickle
 
 
-
 def get_env(file_name, no_graphics, training, config):
 
     parameter_channel = EnvironmentParametersChannel()
@@ -118,7 +117,6 @@ def test(num_episodes, brain, env, file, model_name, identifier, step_to_resume)
                 done = True
                 break
 
-
 def parse_json(file):
     with open(file, "r") as f:
         return json.load(f)
@@ -127,7 +125,6 @@ def print_log_info(path,infos):
     print(infos)
     with open(path + "config.txt", "w") as f:
         f.write(infos)
-
 
 
 if __name__ =="__main__":
