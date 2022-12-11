@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
@@ -6,11 +5,13 @@ using System.Linq;
 
 public class ExplorationCheckpointsController : MonoBehaviour
 {
-    private int seed = 42;
+    private readonly int seed = 42;
+    private readonly string path = "OurModels/ReportData/ExplorationRate/";
+    private readonly float timeScale = 20.0f;
+
     private int counter = 0;
     private Component[] myCheckpoints;
-    private string path = "OurModels/ReportData/ExplorationRate/";
-    private float timeScale = 20.0f;
+
     private List<string> rates;
 
     // Start is called before the first frame update
