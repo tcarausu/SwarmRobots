@@ -48,16 +48,17 @@ for list, name in zip(l,names):
 df = pd.DataFrame(a)
 print(df.iloc[:,4:].describe())
 
-# sns.violinplot(df)
-# plt.xticks(range(len(names)), [n[-4:] for n in names])
+sns.violinplot(df)
+plt.xticks(range(len(names)), [n[-4:] for n in names])
 
 # # plt.show()
 # plt.figure()
 # plt.plot(df.loc[:,"Communication_Test(19).txt"])
 # plt.plot(df.loc[:,"Communication_Test(1).txt"],c ="g")
-# plt.figure()
-# plt.plot(df.mean())
-# plt.xticks(range(len(names)), [n[-4:] for n in names])
+plt.figure()
+plt.plot(df.mean())
+plt.scatter(range(len(df.mean())),df.mean(),c = "r")
+plt.xticks(range(len(names)), [n[-4:] for n in names])
 
 # plt.figure()
 # plt.plot(sample(df.iloc[:,15]),100)
@@ -111,8 +112,8 @@ axs[0].set_ylim(-400,400)
 axs[0].legend()
 
 print(df.columns)
-axs[1].plot(df.loc[:,"20Agent2ndrun(13)_"].rolling(50).mean())
-# axs[1].plot(df.loc[:,"20Agent2ndrun(15)_"].rolling(10).mean())
+axs[1].plot(df.loc[:,"20Agent2ndrun(13)_"])
+axs[1].plot(df.loc[:,"20Agent2ndrun(15)_"])
 plt.show()
 
 
