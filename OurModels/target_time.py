@@ -14,10 +14,11 @@ if __name__ == "__main__":
     mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
     # mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest"]
 
-    difficulties = ["Close","Medium","Far"]
+    # difficulties = ["Close","Medium","Far"]
+    n_tests = [3,6,18,30]
 
     #create a list with maze+target names that will represent the x-axis
-    x_ticks = [name + difficulty for name in mazes_names for difficulty in difficulties] 
+    x_ticks = [name + str(n+1)  for name,n_test in zip(mazes_names,n_tests) for n in range(n_test) ] 
 
     plot = "TimeToTarget"
     time_values, models = get_time_values(mazes_names,plot)
@@ -45,6 +46,9 @@ if __name__ == "__main__":
 
     print(df)
 
+
+    print(df[(df>200) & (df<300)].count())
+
     # We have a max number of steps fixed to 15000, which results in 5 minutes of exploration time.
     # To make data "agnostic" with respect to this value, we can normalize rows (performance of models in each
     # target). We can normalize in 2 ways: with respect to the maximum exploration time (300 seconds), thus 
@@ -54,16 +58,18 @@ if __name__ == "__main__":
     # decides the normalization
 
 
-    df_normalized = df.apply(norm, respect_to_max_time=False, axis = 1) #normalize rows
+    df_normalized = df.apply(norm, respect_to_max_time=True, axis = 1) #normalize rows
 
     # select only the columns we are interested in. The following selects only models without communication
-    columns = [c for c in df_normalized.columns if "NoComm" in c or "1Agent" in c]
+    columns = [c for c in df_normalized.columns]
     df_to_plot = df_normalized[columns]
 
     #create dataframe to easily plot means. One row for each model, one columns containing normalized mean
     mean_df = pd.DataFrame({
         "mean" : df_to_plot.mean(axis=0)
     })
+
+    print(mean_df)
 
     mean_df.plot.bar(y="mean",rot=45, title = "Mean time to reach target",legend = False)
 
@@ -95,28 +101,30 @@ if __name__ == "__main__":
     plt.xlabel("Model")
     plt.ylabel("Mean")
 
+    
+
 
     #---------------------------------------
-    fig, axes = plt.subplots(1,len(mazes_names))
-    fig.tight_layout(pad=5.0)
+    # fig, axes = plt.subplots(1,len(mazes_names))
+    # fig.tight_layout(pad=5.0)
 
-    axs = axes.flatten()
+    # axs = axes.flatten()
 
-    #here we want to plot times needed to complete each target. we have to transpose again the dataframe so that columns are targets.
-    df_t = df.transpose() 
-    n = len(difficulties)
+    # #here we want to plot times needed to complete each target. we have to transpose again the dataframe so that columns are targets.
+    # df_t = df.transpose() 
+    # n = len(n_tests)
 
 
     # Distribution of "target to time" in each target for each maze. It shows that
     # easy target are actually easier than medium and so on.
     # This is computed over all models
-    for i, (maze, ax) in enumerate(zip(mazes_names, axs)):
-        sns.boxplot(data = df_t.iloc[:,i*n:i*n+n], ax=ax) 
-        ax.set_title(f"{maze}")
-        ax.set_xticks(range(n),difficulties)
-        ax.set_xticklabels(ax.get_xticklabels(),rotation=45,size="xx-small")
-        ax.set_xlabel("Target complexity")
-        ax.set_ylabel("Time to target")
+    # for i, (maze, ax) in enumerate(zip(mazes_names, axs)):
+    #     sns.boxplot(data = df_t.iloc[:,i*n:i*n+n], ax=ax) 
+    #     ax.set_title(f"{maze}")
+    #     ax.set_xticks(range(n),n_tests)
+    #     ax.set_xticklabels(ax.get_xticklabels(),rotation=45,size="xx-small")
+    #     ax.set_xlabel("Target complexity")
+    #     ax.set_ylabel("Time to target")
 
 
 

@@ -29,9 +29,12 @@ def get_time_values(mazes_names, plot):
     
     folder = os.path.dirname(__file__) 
     os.chdir(f"{folder}//ReportData//{plot}")
+    # os.chdir(f"{folder}//OldTest//OldTest-Official Data//{plot}")
     models = os.listdir() #get all models in the folder
 
     time_values = list()
+
+    # models = [m for m in models if ("DistanceFree" in m or "NoComm" in m or "Free" in m or "Distance" in m) and "Position" not in m and "Zeroed" not in m and "Higher" not in m and "Disturbed" not in m ]
 
     for model in models: #for each model
         model_list = list()
@@ -41,11 +44,11 @@ def get_time_values(mazes_names, plot):
                     line = line[:-1] if line[-1]=="\n" else line #delete '\n' at the end of first n-1 rows
                     if len(line) < 2:
                         line += ".0"
-
-                    if "Higher" in model and "Time" in plot:
-                        model_list.append(20. * float(line[:-1].replace(",","."))) #save number as float (c# saves float with comma)
-                    else:
-                        model_list.append(float(line[:-1].replace(",",".")))
+                    
+                    number = float(line[:-1].replace(",","."))
+                    if number < 0:
+                        number = 300.0
+                    model_list.append(number)
                     
         time_values.append(model_list)
         print(len(model_list), model)

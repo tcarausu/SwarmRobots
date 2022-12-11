@@ -46,7 +46,7 @@ public class TargetTestScript : MonoBehaviour
 
     public void saveTimeToTarget(string modelName)
     {
-#if UNITY_EDITOR
+#if !UNITY_EDITOR
 			File.WriteAllLines(path + modelName + "/" + trainingAreaName + ".dat", TimeToTarget);
             expCheckController.saveExplorationRate(modelName, trainingAreaName);
 #endif
