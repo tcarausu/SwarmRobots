@@ -11,8 +11,16 @@ from function import *
 
 if __name__ == "__main__":
 
-    
-    time_values, models = get_time_values()
+    mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
+    # mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest"]
+
+    difficulties = ["Close","Medium","Far"]
+
+    #create a list with maze+target names that will represent the x-axis
+    x_ticks = [name + difficulty for name in mazes_names for difficulty in difficulties] 
+
+    plot = "TimeToTarget"
+    time_values, models = get_time_values(mazes_names,plot)
 
 
     #plot a line connecting times for each swarm. This graph is a bit messy
@@ -99,7 +107,7 @@ if __name__ == "__main__":
     n = len(difficulties)
 
 
-    # It shows distribution of "target to time" in each target for each maze. It shows that
+    # Distribution of "target to time" in each target for each maze. It shows that
     # easy target are actually easier than medium and so on.
     # This is computed over all models
     for i, (maze, ax) in enumerate(zip(mazes_names, axs)):

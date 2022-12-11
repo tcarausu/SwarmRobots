@@ -4,13 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-folder = os.path.dirname(__file__) 
-os.chdir(f"{folder}//ReportData//TimeToTarget")
-mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
-difficulties = ["Close","Medium","Far"]
 
-#create a list with maze+target names that will represent the x-axis
-x_ticks = [name + difficulty for name in mazes_names for difficulty in difficulties] 
 
 def sort_by_initial(x):
     try:
@@ -31,12 +25,13 @@ def norm(row, respect_to_max_time = True, max_time = 300):
 
 
 
-def get_time_values():
+def get_time_values(mazes_names, plot):
+    
+    folder = os.path.dirname(__file__) 
+    os.chdir(f"{folder}//ReportData//{plot}")
     models = os.listdir() #get all models in the folder
 
     time_values = list()
-    
-
 
     for model in models: #for each model
         model_list = list()
@@ -44,8 +39,16 @@ def get_time_values():
             with open(f"{model}//{file}.dat","r") as f: #open file containing data
                 for line in f:
                     line = line[:-1] if line[-1]=="\n" else line #delete '\n' at the end of first n-1 rows
-                    model_list.append(float(line[:-1].replace(",","."))) #save number as float (c# saves float with comma)
+                    if len(line) < 2:
+                        line += ".0"
+
+                    if "Higher" in model and "Time" in plot:
+                        model_list.append(20. * float(line[:-1].replace(",","."))) #save number as float (c# saves float with comma)
+                    else:
+                        model_list.append(float(line[:-1].replace(",",".")))
+                    
         time_values.append(model_list)
+        print(len(model_list), model)
 
     #time values is a N_MODELS * N_MAZES matrix
 

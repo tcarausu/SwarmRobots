@@ -15,6 +15,8 @@ public class SceneChanger : MonoBehaviour
 
 	public MazeSize size;
 
+	private bool sceneChanging = false;
+
 	public void EndScene()
 	{
 		if (size == MazeSize.Big)
@@ -25,10 +27,11 @@ public class SceneChanger : MonoBehaviour
 #endif
         }
         else
-        {
+        {	
 			MazeSize nextSize = size + 1;
 			string newSceneName = nextSize.ToString() + "MazeTest";
 			SceneManager.LoadScene(newSceneName);
+			sceneChanging = true;
 
 		}
 	}
@@ -36,4 +39,9 @@ public class SceneChanger : MonoBehaviour
 	{
 		Application.Quit();
 	}
+
+	public bool isSceneChanging()
+    {
+		return sceneChanging;
+    }
 }

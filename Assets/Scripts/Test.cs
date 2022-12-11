@@ -50,6 +50,8 @@ public class Test : Agent
     }
 
     private List<string> commList;
+    private List<string> posX;
+    private List<string> posZ;
 
     public List<Communication> CommunicationMode;
     public Movement movementMode;
@@ -89,6 +91,8 @@ public class Test : Agent
     private List<Checkpoint> clearedCheckpoints;
     private Vector3 initialPosition;
 
+    private SceneChanger sChangerScript;
+
     private TargetTestScript targetComponent;
 
     [Header("Test parameters")]
@@ -104,8 +108,15 @@ public class Test : Agent
 
     new void Awake()
     {
+
         base.Awake();
+
+        var sceneChanger = GameObject.Find("SceneChanger");
+        sChangerScript = sceneChanger.GetComponent<SceneChanger>();
+
         commList = new List<string>();
+        posX = new List<string>();
+        posZ = new List<string>();
         controller = GetComponent<CharacterController>();
         clearedCheckpoints = new List<Checkpoint>();
 
@@ -242,8 +253,7 @@ public class Test : Agent
             
             if (numAgents == 20)
             {
-                var sceneChanger = GameObject.Find("SceneChanger");
-                var sChangerScript = sceneChanger.GetComponent<SceneChanger>();
+                
                 sChangerScript.EndScene();
             }
             else
@@ -335,6 +345,10 @@ public class Test : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
+
+        if (sChangerScript.isSceneChanging())
+            return;
+
         switch (movementMode)
         {
             case Movement.NSWE:
@@ -387,6 +401,10 @@ public class Test : Agent
                 break;
         }
 
+        
+        posX.Add(transform.localPosition.x.ToString());
+        posZ.Add(transform.localPosition.z.ToString());
+
         if (reachedGoal)
         {
             
@@ -432,9 +450,12 @@ public class Test : Agent
 
     }
 
-    private void PrintLog()
+    private void printLog()
     {
         File.WriteAllLines("Communication_" + name + ".txt", commList);
+        File.WriteAllLines(name + "X.txt", posX);
+        File.WriteAllLines(name + "Z.txt", posZ);
+
     }
 
     private void CheckTargetProximity()
