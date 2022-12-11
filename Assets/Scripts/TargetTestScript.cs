@@ -11,7 +11,7 @@ public class TargetTestScript : MonoBehaviour
     public string trainingAreaName = "";
 
     private List<string> TimeToTarget;
-    private string path = "OurModels/TimeToTarget/";                   
+    private string path = "OurModels/ReportData/TimeToTarget/";                   
     private int count;
 
     private ExplorationCheckpointsController expCheckController;

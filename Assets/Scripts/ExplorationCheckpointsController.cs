@@ -6,11 +6,10 @@ using System.Linq;
 
 public class ExplorationCheckpointsController : MonoBehaviour
 {
-
+    private int seed = 42;
     private int counter = 0;
-    private int total;
     private Component[] myCheckpoints;
-    private string path = "OurModels/ExplorationRate/";
+    private string path = "OurModels/ReportData/ExplorationRate/";
 
     private List<string> rates;
 
@@ -19,6 +18,8 @@ public class ExplorationCheckpointsController : MonoBehaviour
     {
         rates = new List<string>();
         myCheckpoints = gameObject.GetComponentsInChildren<ExplorationCheckpoint>(true);
+        Time.timeScale = 20;
+        Random.InitState(seed);
     }
 
     public void increase()
@@ -54,10 +55,5 @@ public class ExplorationCheckpointsController : MonoBehaviour
     {
         rates.Add(((float)counter / myCheckpoints.Count()).ToString());
     }
-
-
-
-
-
 
 }
