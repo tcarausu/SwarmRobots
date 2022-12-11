@@ -5,9 +5,10 @@ using UnityEngine;
 public class SelectRandomMaze : MonoBehaviour
 {
     public List<Transform> randomMazes = new();
-
+    private int seed = 42;
     private void Awake()
     {
+        Random.InitState(seed);
         foreach (Transform child in transform)
         {
             randomMazes.Add(child);
