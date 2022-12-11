@@ -10138,6 +10138,9 @@ MonoBehaviour:
   - {x: 35, y: 1.5, z: 13}
   - {x: -36, y: 1.5, z: 26}
   - {x: 30, y: 1.5, z: -31}
+  - {x: 39.9, y: 1.5, z: -6.1}
+  - {x: 12.9, y: 1.5, z: 37.5}
+  - {x: -4.1, y: 1.5, z: -21.6}
   trainingAreaName: SmallMazeTest
 --- !u!54 &5151741990877956922
 Rigidbody:

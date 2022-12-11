@@ -410,7 +410,7 @@ public class Test : Agent
             
             Debug.Log(name + " Reached Target in test number " + testNumber);
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
-            string time = (ts.TotalMilliseconds / 1000.0f).ToString();
+            string time = (ts.TotalMilliseconds * Time.timeScale/ 1000.0f ).ToString();
             Debug.Log("Time needed to reach: " + time + "  ---  Total reward = " + totalReward);
 
             targetComponent.registerTime(time);
@@ -432,9 +432,9 @@ public class Test : Agent
         if (moves >= maxMoves)
         {
             System.TimeSpan ts = System.DateTime.UtcNow - startTime;
-            string timeInSeconds = (ts.TotalMilliseconds / 1000.0f).ToString();
+            string timeInSeconds = (ts.TotalMilliseconds * Time.timeScale / 1000.0f).ToString();
             Debug.Log("Failed test number " + testNumber + " after " + timeInSeconds + " seconds" + "  ---  Total reward = " + totalReward);
-            targetComponent.registerTime(timeInSeconds); //default value. if it doesn't reach the target, we set time to 0
+            targetComponent.registerTime("-1,0"); //default value. if it doesn't reach the target, we set time to -1
             ReachedTarget();
             return;
         }

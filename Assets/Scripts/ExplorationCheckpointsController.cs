@@ -10,7 +10,7 @@ public class ExplorationCheckpointsController : MonoBehaviour
     private int counter = 0;
     private Component[] myCheckpoints;
     private string path = "OurModels/ReportData/ExplorationRate/";
-
+    private float timeScale = 20.0f;
     private List<string> rates;
 
     // Start is called before the first frame update
@@ -18,7 +18,7 @@ public class ExplorationCheckpointsController : MonoBehaviour
     {
         rates = new List<string>();
         myCheckpoints = gameObject.GetComponentsInChildren<ExplorationCheckpoint>(true);
-        Time.timeScale = 20;
+        Time.timeScale = timeScale;
         Random.InitState(seed);
     }
 
