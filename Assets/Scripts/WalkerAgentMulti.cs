@@ -67,7 +67,7 @@ public class WalkerAgentMulti : Agent
     private float hitAgentPenalty = 0.003f;
 
     private float checkpointReward = 0.15f;
-    private float targetReward = 5;
+    private float targetReward = 1;
     private float nearTargetReward = 0.002f;
 
     // Communication
