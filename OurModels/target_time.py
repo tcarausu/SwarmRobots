@@ -7,8 +7,6 @@ from function import *
 
 
 
-
-
 if __name__ == "__main__":
 
     mazes_names = ["ToyMazeTest", "SmallMazeTest", "MediumMazeTest", "BigMazeTest"]
