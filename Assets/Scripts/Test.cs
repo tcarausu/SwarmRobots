@@ -59,17 +59,17 @@ public class Test : Agent
     public float rotationSensitivity = 10;
 
     [Header("Rewards")]
-    public float existenctialPenalty = 0.001f;
+    private readonly float existenctialPenalty = 0.001f;
 
     [Tooltip("The penalty is multiplied by 1/distance from the near agent if they are on sigth")]
-    public float nearAgentPenalty = 0.1f;
+    private readonly float nearAgentPenalty = 0.1f;
 
-    public float hitWallPenalty = 0.05f;
-    public float hitAgentPenalty = 0.03f;
+    private readonly float hitWallPenalty = 0.05f;
+    private readonly float hitAgentPenalty = 0.03f;
 
-    public float checkpointReward = 0.15f;
-    public float targetReward = 1;
-    public float nearTargetReward = 0.01f;
+    private readonly float checkpointReward = 0.15f;
+    private readonly float targetReward = 1;
+    private readonly float nearTargetReward = 0.01f;
 
     public string customModelName = "";
 
@@ -80,7 +80,6 @@ public class Test : Agent
     private Dictionary<string, float> communicationMap;
     private readonly int CommunicationSpots = 3;
     private float LastFreeComm = 0;
-
 
     private Transform Swarm;
     private List<Test> otherAgents;
