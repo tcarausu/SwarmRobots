@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from function import *
+from scipy.stats import ttest_rel
 
 
 if __name__ == "__main__":
@@ -26,13 +27,40 @@ if __name__ == "__main__":
     swarms_sizes = [4,8,12,16,20]
     # swarms_sizes = [16,20]
 
+    
+
+
+    columns = parse_columns(columns=df.columns, to_include = ["Free", "Zeroed", "Disturbed", "Random", "NoComm","Inside"], to_not_include= [ "Distance", ])
+    
+    print(columns)
+    
+
+    dict = {"average_Free" : df[[c for c in columns if "Disturbed" not in c and "Inside" not in c and "Zeroed" not in c and "NoComm" not in c and "Random" not in c]].mean(axis=1), 
+    "average_Zeroed" : df[[c for c in columns if "Zeroed" in c]].mean(axis=1), 
+    "average_Disturbed" : df[[c for c in columns if "Disturbed" in c]].mean(axis=1),
+    "average_NoComm" : df[[c for c in columns if "NoComm" in c]].mean(axis=1),
+    "average_Inside" : df[[c for c in columns if "Inside" in c]].mean(axis=1),
+    "average_Random" : df[[c for c in columns if "Random" in c]].mean(axis=1)}
+        
+    df_to_plot = pd.DataFrame()
+    
+    for a in dict:
+        df_to_plot[a] = dict[a]
+
+    df_to_plot
+    print(df_to_plot)
+
+    print("T_TEST free - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Free"]))
+    print("T_TEST disturbed - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Disturbed"]))
+    print("T_TEST free - disturbed: " , ttest_rel(df_to_plot["average_Disturbed"], df_to_plot["average_Free"]))
+    print("T_TEST free - noComm: " , ttest_rel(df_to_plot["average_NoComm"], df_to_plot["average_Free"]))
+    print("T_TEST randominside - free: " , ttest_rel(df_to_plot["average_Inside"], df_to_plot["average_Free"]))
+    
+    # df_to_plot.mean().plot.bar(rot=45, legend = False)
+    sns.boxplot(df_to_plot)
+
+    
     fig, axs = plt.subplots(1,len(swarms_sizes))
-
-
-
-
-    
-    
     for i, swarm in enumerate(swarms_sizes):
 
         #select models that you want to plot.
@@ -43,19 +71,17 @@ if __name__ == "__main__":
         # [c for c in df.columns if c.startswith(str(swarm)) and ("Free" in c or "Zeroed" not in c or "Disturbed" not in c) and "NoComm" in c and "Distance" not in c]
 
 
-        columns = [c for c in df.columns if c.startswith(str(swarm))]
-        colors = []
-        for c in columns:
-            if "Higher" in c:
-                colors.append("g")
-            else:
-                colors.append("b")
+        
+
+        columns_swarm = [c for c in columns if c.startswith(str(swarm))]
+        # colors = []
+        
         
         # you can play with iloc to plot just some rows. [len(swarm) - 6:] is getting only last 6 rows (correspond to medium and big maze)
         # df_swarm = df[columns]
-        df_swarm = df[columns].mean()      
+        df_swarm = df[columns_swarm].mean()      
         
-        df_swarm.plot.bar(rot=45, ax = axs[i], legend = False,color = colors)
+        df_swarm.plot.bar(rot=45, ax = axs[i], legend = False)
         axs[i].set_xticklabels(axs[i].get_xticklabels(),rotation=45,size="xx-small")
         axs[i].set_title(str(swarm) + " Agents")
 

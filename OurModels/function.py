@@ -35,7 +35,7 @@ def get_time_values(mazes_names, plot):
     time_values = list()
 
     # models = [m for m in models if ("DistanceFree" in m or "NoComm" in m or "Free" in m or "Distance" in m) and "Position" not in m and "Zeroed" not in m and "Higher" not in m and "Disturbed" not in m ]
-
+    models.sort()
     for model in models: #for each model
         model_list = list()
         for file in mazes_names: #for each maze
@@ -56,5 +56,29 @@ def get_time_values(mazes_names, plot):
     #time values is a N_MODELS * N_MAZES matrix
 
     #sort models by swarm size. since each name is associated to a list, we have to sort both lists
-    time_values, models = zip(*sorted(zip(time_values, models), key=lambda x: sort_by_initial(x[1])))
+    # time_values, models = zip(*sorted(zip(time_values, models), key=lambda x: sort_by_initial(x[1])))
     return time_values, models 
+
+
+
+
+def parse_columns(columns, to_include, to_not_include):
+
+
+    new_columns = []
+    flag = False
+    for c in columns:
+        for word in to_include:
+            if word not in c:
+                flag = True
+                break
+        for word in to_not_include:
+            if word in c:
+                flag = False
+                break
+        
+        if flag:
+            new_columns.append(c)
+
+    return new_columns       
+

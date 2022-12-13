@@ -5,22 +5,22 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/PseudoRandomWalls.unity
     guid: c6713b57a43b3aa42904edc72397590f
   - enabled: 0
     path: Assets/Scenes/MediumMaze.unity
     guid: 3097d825fc5b1bb43bdb27b07fb72356
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TestScenes/ToyMazeTest.unity
     guid: 485b19f104178e5428725696ef1d3c5c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TestScenes/SmallMazeTest.unity
     guid: acce00c443659f343be8dbf38e4dcf4e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TestScenes/MediumMazeTest.unity
     guid: b3d41ed375d95b74892931db577c3ab6
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TestScenes/BigMazeTest.unity
     guid: ef17163da5d483d4db9bed7d469bb87d
   m_configObjects: {}
