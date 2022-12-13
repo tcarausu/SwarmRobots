@@ -1,3 +1,5 @@
+env_settings:
+  seed: 42
 behaviors:
   WalkerAgentMulti:
     trainer_type: ppo
