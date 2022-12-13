@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sns
 from function import *
 
-
+plt.style.use("ggplot")
 
 if __name__ == "__main__":
 
@@ -59,8 +59,10 @@ if __name__ == "__main__":
     df_normalized = df.apply(norm, respect_to_max_time=True, axis = 1) #normalize rows
 
     # select only the columns we are interested in. The following selects only models without communication
-    columns = [c for c in df_normalized.columns]
+    columns = parse_columns(columns=df.columns, to_include = ["NoComm"], to_not_include= [ "Random", "Inside", "Disturbed","Zeroed","Free","Distance"])
     df_to_plot = df_normalized[columns]
+
+    print(df_to_plot[df_to_plot==1.0].count())
 
     #create dataframe to easily plot means. One row for each model, one columns containing normalized mean
     mean_df = pd.DataFrame({
@@ -69,11 +71,11 @@ if __name__ == "__main__":
 
     print(mean_df)
 
-    mean_df.plot.bar(y="mean",rot=45, title = "Mean time to reach target",legend = False)
+    mean_df.plot.bar(y="mean",rot=45, title = "Average Time to Target",legend = False)
 
     plt.xticks(size='xx-small')
     plt.xlabel("Model")
-    plt.ylabel("Normalized mean")
+    plt.ylabel("Normalized average [s]")
 
     #---------------------------------------
 

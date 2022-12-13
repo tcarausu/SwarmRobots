@@ -30,34 +30,59 @@ if __name__ == "__main__":
     
 
 
-    columns = parse_columns(columns=df.columns, to_include = ["Free", "Zeroed", "Disturbed", "Random", "NoComm","Inside"], to_not_include= [ "Distance", ])
-    
-    print(columns)
-    
+    columns = parse_columns(columns=df.columns, to_include = ["Distance","Free","Disturbed","Zeroed","Random", "NoComm"], to_not_include= [ "Random", "Inside"])
+    col = []
+    for c in columns:
+        if "NewConfig" in c:
+            col.append(c)
+            continue
+        if "Free" in c and "Distance" not in c:
+            col.append(c)
 
-    dict = {"average_Free" : df[[c for c in columns if "Disturbed" not in c and "Inside" not in c and "Zeroed" not in c and "NoComm" not in c and "Random" not in c]].mean(axis=1), 
-    "average_Zeroed" : df[[c for c in columns if "Zeroed" in c]].mean(axis=1), 
-    "average_Disturbed" : df[[c for c in columns if "Disturbed" in c]].mean(axis=1),
-    "average_NoComm" : df[[c for c in columns if "NoComm" in c]].mean(axis=1),
-    "average_Inside" : df[[c for c in columns if "Inside" in c]].mean(axis=1),
-    "average_Random" : df[[c for c in columns if "Random" in c]].mean(axis=1)}
+            
+    columns = col
+    # print(columns)
+    print(df)
+
+    # di\ct = {"average_Free" : df[[c for c in columns if "Disturbed" not in c and "Inside" not in c and "Zeroed" not in c and "NoComm" not in c and "Random" not in c]].mean(axis=1), 
+    # "average_Zeroed" : df[[c for c in columns if "Zeroed" in c]].mean(axis=1), 
+    # "average_Disturbed" : df[[c for c in columns if "Disturbed" in c]].mean(axis=1),
+    # "average_NoComm" : df[[c for c in columns if "NoComm" in c]].mean(axis=1),
+    # "average_Inside" : df[[c for c in columns if "Inside" in c]].mean(axis=1),
+    # "average_Random" : df[[c for c in columns if "Random" in c]].mean(axis=1)}
         
-    df_to_plot = pd.DataFrame()
+    # df_to_plot = pd.DataFrame()
     
-    for a in dict:
-        df_to_plot[a] = dict[a]
+    # for a in dict:
+    #     df_to_plot[a] = dict[a]
 
-    df_to_plot
-    print(df_to_plot)
+    # df_to_plot
+    # print(df_to_plot)
 
-    print("T_TEST free - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Free"]))
-    print("T_TEST disturbed - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Disturbed"]))
-    print("T_TEST free - disturbed: " , ttest_rel(df_to_plot["average_Disturbed"], df_to_plot["average_Free"]))
-    print("T_TEST free - noComm: " , ttest_rel(df_to_plot["average_NoComm"], df_to_plot["average_Free"]))
-    print("T_TEST randominside - free: " , ttest_rel(df_to_plot["average_Inside"], df_to_plot["average_Free"]))
+    # print("T_TEST free - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Free"]))
+    # print("T_TEST disturbed - random: " , ttest_rel(df_to_plot["average_Random"], df_to_plot["average_Disturbed"]))
+    # print("T_TEST free - disturbed: " , ttest_rel(df_to_plot["average_Disturbed"], df_to_plot["average_Free"]))
+    # print("T_TEST free - noComm: " , ttest_rel(df_to_plot["average_NoComm"], df_to_plot["average_Free"]))
+    # print("T_TEST randominside - free: " , ttest_rel(df_to_plot["average_Inside"], df_to_plot["average_Free"]))
     
     # df_to_plot.mean().plot.bar(rot=45, legend = False)
-    sns.boxplot(df_to_plot)
+    # sns.boxplot(df_to_plot)
+    # df_20 = df[["20NewConfigFree", "20NewConfig"]]
+    # df_20.plot.bar(rot=45)
+
+
+    time_values, models = get_time_values(mazes_names, "ExplorationRate")
+    df_explo = pd.DataFrame(np.array(time_values).T, columns=models,index=x_ticks) 
+    print(df_explo)
+
+    d_columns = df_explo[["20AgentsFree", "20AgentsNoComm"]]
+    d_c_tt = df[["20AgentsFree", "20AgentsNoComm"]]
+    print(d_columns)
+    print(d_c_tt)
+    d_rows = d_columns[(d_c_tt["20AgentsFree"] == 300.0) & (d_c_tt["20AgentsNoComm"] == 300.0)]
+    d_rows.plot.bar(rot=45)
+
+
 
     
     fig, axs = plt.subplots(1,len(swarms_sizes))
