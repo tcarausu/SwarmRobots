@@ -7,7 +7,7 @@ public class ExplorationCheckpointsController : MonoBehaviour
 {
     private readonly int seed = 42;
     private readonly string path = "OurModels/ReportData/ExplorationRate/";
-    private readonly float timeScale = 1.0f;
+    private readonly float timeScale = 20.0f;
 
     private int counter = 0;
     private Component[] myCheckpoints;
