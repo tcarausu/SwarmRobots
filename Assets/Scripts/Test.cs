@@ -283,13 +283,10 @@ public class Test : Agent
         }
         else
         {
-
-            
             //print to file time values. Called here so that just 1 agents calls it
             targetComponent.saveTimeToTarget(modelName);
             Target.localPosition = targetComponent.getTargetPosition();
         }
-       
         reachedGoal = false;
     }
 
@@ -312,13 +309,13 @@ public class Test : Agent
 
         if (CommunicationMode.Contains(Communication.Position))
         {
-            communicationMap["My_position_x"] = transform.localPosition.x;
-            communicationMap["My_position_z"] = transform.localPosition.z;
+            communicationMap["My_position_x"] = Normalize(transform.localPosition.x);
+            communicationMap["My_position_z"] = Normalize(transform.localPosition.z);
 
             for (int i = 0; i < CommunicationSpots; i++)
             {
-                communicationMap[i + "position_x"] = otherAgentsDistance[i].agent.transform.localPosition.x;
-                communicationMap[i + "position_z"] = otherAgentsDistance[i].agent.transform.localPosition.z;
+                communicationMap[i + "position_x"] = Normalize(otherAgentsDistance[i].agent.transform.localPosition.x);
+                communicationMap[i + "position_z"] = Normalize(otherAgentsDistance[i].agent.transform.localPosition.z);
             }
 
         }
@@ -332,6 +329,11 @@ public class Test : Agent
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
+    }
+
+    private float Normalize(float coordinate)
+    {
+        return coordinate / sChangerScript.getFloatMazeSize();
     }
 
     private void ComputeDistances()

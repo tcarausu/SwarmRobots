@@ -12,6 +12,7 @@ public class SceneChanger : MonoBehaviour
 		Medium,
 		Big
     }
+	
 
 	public MazeSize size;
 
@@ -44,4 +45,16 @@ public class SceneChanger : MonoBehaviour
     {
 		return sceneChanging;
     }
+
+	public float getFloatMazeSize()
+    {
+		return size switch
+		{
+			MazeSize.Toy => 50.0f,
+			MazeSize.Small => 100.0f,
+			MazeSize.Medium => 300.0f,
+			MazeSize.Big => 500.0f,
+			_ => 1.0f,
+		};
+	}
 }
