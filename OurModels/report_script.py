@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     #------- First graph: compare different sizes of swarms not using communication
 
-    columns = parse_columns(columns=df.columns, to_include = ["NoComm"]) #get columns containing NoComm
+    columns = parse_columns(columns=df.columns, to_include = ["NoComm"], to_not_include=["Exist","Check"]) #get columns containing NoComm but not those without rewards
 
     df_no_comm = df[columns] #create dataframe with only those columns
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     comm_types = [ "NoComm","Free","Distance","Position","DistanceFree","FreePosition"]
 
     #select columns
-    columns = parse_columns(columns=df.columns, to_include = comm_types, to_not_include= ["Zeroed","Inside","Random","Disturbed"])
+    columns = parse_columns(columns=df.columns, to_include = comm_types, to_not_include= ["Zeroed","Random","Disturbed", "Exist","Check","NoNear"])
     
     swarms_sizes = [4,8,12,16,20]
 
@@ -71,15 +71,14 @@ if __name__ == "__main__":
         #select only columns related to a swarm size
         columns_swarm = [c for c in columns if c.startswith(str(swarm))]
 
-        columns_swarm.insert(0, columns_swarm.pop(2)) #place no comm at the beginning
+        columns_swarm.insert(0, columns_swarm.pop(4)) #place no comm at the beginning
 
         #select data
         df_swarm = df[columns_swarm]
 
-
         current_colors_map = {}
 
-        #we need this to give names starting by the swarm size we are currently examining
+        #we need this to give names starting by the swarm size we are currently iterating on
         for comm_type in colors_map:
             current_colors_map.update({str(swarm) +"Agents"+ comm_type : colors_map[comm_type]})
 
@@ -89,7 +88,7 @@ if __name__ == "__main__":
 
         #set y label only in the first subplot to make figure clearer
         if i==0:
-            axs[i].set_ylabel("Time to Target") 
+            axs[i].set_ylabel("Time to Target [s]") 
 
     #create custom legend
     custom_lines = [Line2D([0], [0], color=colors_map[comm], lw=4) for comm in comm_types]
@@ -100,17 +99,22 @@ if __name__ == "__main__":
 
     comm_types = [ "Free","NoComm","Distance","Position","DistanceFree"]
 
-    
-    columns = parse_columns(columns=df.columns, to_include = comm_types, to_not_include= ["Zeroed", "Inside","Random","Disturbed","NoNear","NoExist"])
+    #select columns and then filter to get only those starting with 20
+    columns = parse_columns(columns=df.columns, to_include = comm_types, to_not_include= ["Zeroed", "Random","Disturbed","Exist","Check","NoNear"])
     columns_20 = [c for c in columns if c.startswith("20")]
 
+    #get only last 30 values, related to big maze
     df_20_big_maze = df[columns_20].iloc[-30:]
 
     #count number of values = 300.0
     df_count = df_20_big_maze[df_20_big_maze == 300.0].count()
     
+    #sort by count in descending order
     columns_20.sort(reverse=True, key=lambda x: df_count.loc[x])
+
+    #apply the new ordering
     df_count = df_count[columns_20]
+
 
     d = df_count.to_dict()
     for k in d:
@@ -130,6 +134,7 @@ if __name__ == "__main__":
 
     df_free = pd.DataFrame()
 
+    #concatenate columns to get all values in a single column
     df_free["Free"] = pd.concat([df["4AgentsFree"], df["8AgentsFree"], df["12AgentsFree"],df["16AgentsFree"],df["20AgentsFree"]])
     df_free["FreeDisturbed"] = pd.concat([df["4AgentsFreeDisturbed"], df["8AgentsFreeDisturbed"], df["12AgentsFreeDisturbed"],df["16AgentsFreeDisturbed"],df["20AgentsFreeDisturbed"]])
     df_free["FreeRandom"] = pd.concat([df["4AgentsFreeRandom"], df["8AgentsFreeRandom"], df["12AgentsFreeRandom"],df["16AgentsFreeRandom"],df["20AgentsFreeRandom"]])    
@@ -137,128 +142,45 @@ if __name__ == "__main__":
 
     plt.figure()
     sns.boxplot(df_free)
-    plt.ylabel("Time to target")
+    plt.ylabel("Time to target [s]")
 
 
     #------- Fifth graph: compare exploration rate in unfound target
 
+
     explo_values, models = get_time_values(mazes_names, "ExplorationRate")
     df_explo = pd.DataFrame(np.array(explo_values).T, columns=models,index=x_ticks) 
 
+    
     comm_types = [ "Free","NoComm","Distance","Position","DistanceFree"]
 
-    columns = parse_columns(columns=df_explo, to_include = comm_types, to_not_include= ["Zeroed", "Inside","Random","Disturbed","NoNear","NoExis"])
+    columns = parse_columns(columns=df_explo, to_include = comm_types, to_not_include= ["Zeroed", "Random","Disturbed","Exist","Check","NoNear"])
 
-    columns_16 = [c for c in columns if c.startswith("8")]
+    columns_8 = [c for c in columns if c.startswith("8")]
 
-    df_explo_16 = df_explo[columns_16][-30:]
-    df_time_16 = df[columns_16][-30:]
+    df_explo_16 = df_explo[columns_8][-30:]
+    df_time_16 = df[columns_8][-30:]
 
 
-
-    df_explo_not_to_target = df_explo_16[df_time_16[columns_16] == 300.0].dropna()
+    #get rows in exploration rate dataframe where time is 300.0 in all columns of time to target dataframe
+    df_explo_not_to_target = df_explo_16[df_time_16[columns_8] == 300.0].dropna()
     df_explo_not_to_target *= 100 #to display percentage
     
-    print(df_explo_not_to_target)
-    
-    fig,axs = plt.subplots(1,len(df_explo_not_to_target) - 2)
+    #display a couple of them    
+    fig,axs = plt.subplots(1,2)
 
     for i in range(len(axs)):
         df_explo_not_to_target.iloc[i,:].plot.bar(ax = axs[i])
 
         labels = []
         for l in axs[i].get_xticklabels():
-            labels.append(l.get_text()[7 :])
+            labels.append(l.get_text()[7:])
 
         axs[i].set_xticklabels(labels,rotation=0)
         axs[i].set_title(df_explo_not_to_target.index[i])
 
         if i==0:
-            axs[i].set_ylabel("")
-
-
-    #------- Sixth graph - compare different rewards in boxplot
-
-
-
-    
-    # df_rewards = pd.DataFrame()
-
-    # df_rewards["Free"] = pd.concat([df["4AgentsFree"], df["8AgentsFree"], df["12AgentsFree"],df["16AgentsFree"],df["20AgentsFree"]])
-    # df_rewards["NoNearAgent"] = pd.concat([df["4NoNearAgentFree"], df["8NoNearAgentFree"], df["12NoNearAgentFree"],df["16NoNearAgentFree"],df["20NoNearAgentFree"]])
-    # df_rewards["NoExistential"] = pd.concat([df["4NoExistentialFree"], df["8NoExistentialFree"], df["12NoExistentialFree"],df["16NoExistentialFree"],df["20NoExistentialFree"]])    
-
-    # plt.figure()
-    # sns.boxplot(df_rewards)
-    # plt.ylabel("Time to target")
-
-    # #------- Seventh graph - compare different rewards in unfound targets
-
-    # columns = parse_columns(columns=df_explo, to_include = ["Free","NoNear","NoExis"], to_not_include= ["Zeroed", "Inside","Random","Disturbed","Distance"])
-    
-    # columns_20 = [c for c in columns if c.startswith("20")]
-    
-    # df_20_big_maze = df[columns_20].iloc[-30:]
-
-    # #count number of values = 300.0
-    # df_count = df_20_big_maze[df_20_big_maze == 300.0].count()
-    
-    # columns_20.sort(reverse=True, key=lambda x: df_count.loc[x])
-    # df_count = df_count[columns_20]
-
-    # d = df_count.to_dict()
-    # for k in d:
-    #     d[k] *= 100 / len(df_20_big_maze)
-    #     d[k] = round(d[k],2)
-
-    # # labels = [c[8:] for c in df_20_big_maze]
-
-    # plt.figure()
-    # ax = plt.bar(*zip(*d.items()))
-    # # plt.xticks(ticks = range(len(labels)),labels= labels)
-    # plt.bar_label(ax)
-    # plt.ylabel("Percentage of unfound targets")
-
-
-    # #------- Eighth graph - compare different rewards in explo rate
-
-
-    # explo_values, models = get_time_values(mazes_names, "ExplorationRate")
-    # df_explo = pd.DataFrame(np.array(explo_values).T, columns=models,index=x_ticks) 
-
-    # comm_types = [ "Free","NoNear","NoExis"]
-
-    # columns = parse_columns(columns=df_explo, to_include = comm_types, to_not_include= ["Zeroed", "Inside","Random","Disturbed","NoComm","Distance","Position","DistanceFree"])
-
-    # columns_16 = [c for c in columns if c.startswith("20")]
-
-    # df_explo_16 = df_explo[columns_16][-30:]
-    # df_time_16 = df[columns_16][-30:]
-
-    # df_explo_not_to_target = df_explo_16[df_time_16[columns_16] == 300.0].dropna()
-    # df_explo_not_to_target *= 100 #to display percentage
-
-    
-    # fig,axs = plt.subplots(1,len(df_explo_not_to_target))
-
-    # for i in range(len(axs)):
-    #     df_explo_not_to_target.iloc[i,:].plot.bar(ax = axs[i])
-
-    #     labels = []
-    #     for l in axs[i].get_xticklabels():
-    #         labels.append(l.get_text())
-
-    #     axs[i].set_xticklabels(labels,rotation=0)
-    #     axs[i].set_title(df_explo_not_to_target.index[i])
-
-    #     if i==0:
-    #         axs[i].set_ylabel("")
-    
-
-
-
-
-
+            axs[i].set_ylabel("Exploration rate (%)")
 
 
     #-----------------------------------------------------------------------------------------
