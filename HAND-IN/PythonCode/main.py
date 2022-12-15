@@ -5,6 +5,7 @@ import json
 import numpy as np
 import os
 import argparse 
+from distutils.util import strtobool
 from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 from mlagents_envs.side_channel.environment_parameters_channel import EnvironmentParametersChannel
 import pickle
@@ -116,14 +117,6 @@ def test(num_episodes, brain, env, file, model_name, identifier, step_to_resume)
                 done = True
                 break
 
-def parse_json(file):
-    with open(file, "r") as f:
-        return json.load(f)
-
-def print_log_info(path,infos):
-    print(infos)
-    with open(path + "config.txt", "w") as f:
-        f.write(infos)
 
 
 if __name__ =="__main__":
@@ -134,17 +127,16 @@ if __name__ =="__main__":
     parser = argparse.ArgumentParser(description='SwarmRobots')
 
     parser.add_argument('--env_name', default="MULTIAGENT_DISCRETE_8agent_random", type = str)
-    parser.add_argument('--type', default="discrete", type=str)
+    parser.add_argument('--action_type', default="discrete", type=str)
     parser.add_argument('--identifier', default="Discrete", type=str)
     parser.add_argument("--config_file", default="test1", type=str)
     parser.add_argument('--warmup', default=1000, type=int)
     parser.add_argument('--num_iterations', default=1_000_000, type=int)
     parser.add_argument('--mode', default="train", type=str)
     parser.add_argument('--model_step', default="", type=str)
-    parser.add_argument('--on_unity', default="", type = str)
+    parser.add_argument('--on_unity', type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=False)
     parser.add_argument("--hidden_neurons", default=256, type=int)
-    parser.add_argument("--resume_model", default="", type=str)
-
+    parser.add_argument("--resume_model", type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=False)
 
 
     args = parser.parse_args()
@@ -172,7 +164,7 @@ if __name__ =="__main__":
     
 
     #file where the environment is. If we want to attach the code to unity, it has to be None
-    file_name = folder + "//binary//" + env_name if args.on_unity != "on_unity" else None
+    file_name = folder + "//binary//" + env_name if not args.on_unity else None
 
 
     config = parse_json(folder + "//config//" + args.config_file + ".json")
@@ -180,18 +172,17 @@ if __name__ =="__main__":
 
     #----HYPERPARAMETERS
 
-    warmup = args.warmup #number of initial steps where actions are chosen randomly. Needed in ddpg to fill memory, still useful in dqn
+    warmup = args.warmup #number of initial steps where actions are chosen randomly. Needed in ddpg to fill memory, can be useful in dqn
 
     num_iterations = args.num_iterations #number of iterations
 
     #---MODEL
 
-    using_discrete = args.type == "discrete"
+    using_discrete = args.action_type == "discrete"
 
     action_size = 7 if using_discrete else 2
 
     training = args.mode == "train"
-
 
 
     infos = f'''
@@ -199,7 +190,7 @@ if __name__ =="__main__":
     Mode: {args.mode}
 
     Environment name: {env_name}
-    Type of action: {args.type}
+    Type of action: {args.action_type}
     Number of action: {action_size}
 
     Run identifier: {identifier}
@@ -225,7 +216,6 @@ if __name__ =="__main__":
     
     '''
 
-    resume_model = True if args.resume_model != "" else False
 
     if training:
 
@@ -235,7 +225,7 @@ if __name__ =="__main__":
 
         print_log_info(folder + "//model//" + env_name + identifier, infos)
 
-        if resume_model:
+        if args.resume_model:
             with open(f"{folder}//model//{args.env_name}{identifier}model", "rb") as f:
                 agent = pickle.load(f)
                 agent.epsilon = 0.5

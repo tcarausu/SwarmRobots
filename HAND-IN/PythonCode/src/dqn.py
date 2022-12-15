@@ -113,11 +113,11 @@ class DQN(DRLAlgo):
         return action_tuple
         
 
-    def load_weights(self, file_to_save,identifier,env_name, step_to_resume):
-        file_to_save += "//data//"  + env_name +"//" + identifier
+    def load_weights(self, file_to_save,identifier,env, step):
+        file_to_save += "//data//"  + env +"//" + identifier
 
         self.network.load_state_dict(
-            torch.load('{}/network_{}.pkl'.format(file_to_save,env_name + identifier[2:-2] + "_" + step_to_resume))
+            torch.load('{}/network_{}_{}.pkl'.format(file_to_save,env + identifier[2:-2] , step))
         )
 
         hard_update(self.network_target, self.network)

@@ -1,9 +1,20 @@
 import numpy as np
 import torch
 import random
+import json
 
 USE_CUDA = torch.cuda.is_available()
 FLOAT = torch.cuda.FloatTensor if USE_CUDA else torch.FloatTensor
+
+
+def parse_json(file):
+    with open(file, "r") as f:
+        return json.load(f)
+
+def print_log_info(path,infos):
+    print(infos)
+    with open(path + "config.txt", "w") as f:
+        f.write(infos)
 
 def normalize_state(state):
         max = np.max(state)

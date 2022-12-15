@@ -53,7 +53,7 @@ class DDPG(DRLAlgo):
 
     
 
-    def update_policy(self, iteration=0):
+    def update_policy(self):
         # Sample batch
         state_batch, action_batch, reward_batch, \
         next_state_batch, terminal_batch = self.memory.sample_and_split(self.batch_size)
