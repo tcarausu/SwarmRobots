@@ -105,9 +105,9 @@ public class Test : Agent
 
     private ExplorationCheckpointsController expCheckController;
 
+    private bool firstGoal = false;
     new void Awake()
     {
-
         base.Awake();
 
         var sceneChanger = GameObject.Find("SceneChanger");
@@ -193,20 +193,15 @@ public class Test : Agent
 
     private void InitModelName()
     {
-
         string s;
-        if (customModelName != "") {
+        if (customModelName != "")
             s = customModelName;
-        }
         else
-        {
             s = "Agents";
-        }
+
         modelName = numAgents + s;
         foreach (Communication comm in CommunicationMode)
-        {
             modelName += CommToString(comm);
-        }
 
         targetComponent.initDirectory(modelName);
         expCheckController.initDirectory(modelName);
@@ -249,25 +244,19 @@ public class Test : Agent
         //true when we have gone through all target positions. -1 is needed since testNumber starts from 1
         if (testNumber - 1 == targetComponent.getTotalPositions())  
         {
-            
             if (numAgents == 20)
-            {
-                
                 sChangerScript.EndScene();
-            }
-            else
-            {
-                if (Swarm.gameObject.activeSelf)
+            else if (Swarm.gameObject.activeSelf)
                 {
                     var nextSwarm = Swarm.parent.Find("Swarm(" + (numAgents + 4) + ")");
                     if (nextSwarm != null && !nextSwarm.gameObject.activeSelf)
                         nextSwarm.gameObject.SetActive(true);
                 }
-            }
         }
 
         startTime = System.DateTime.UtcNow;
         moves = 0;
+        Time.timeScale = 10.0f;
     }
 
     private void ResetPosition()
@@ -329,6 +318,8 @@ public class Test : Agent
         if (CommunicationMode.Count() != 0 && !CommunicationMode.Contains(Communication.Absent))
             sensor.AddObservation(communicationMap.Values.ToList());
 
+        if (firstGoal && moves>500)
+            Time.timeScale = 1.0f;
     }
 
     private float Normalize(float coordinate)
@@ -342,7 +333,11 @@ public class Test : Agent
             agent.SetDistanceFrom(transform.localPosition);
     }
 
-    public void ReachGoal() { reachedGoal = true; }
+    public void ReachGoal() 
+    { 
+        reachedGoal = true;
+        firstGoal = true;
+    }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
@@ -402,6 +397,7 @@ public class Test : Agent
                 break;
         }
 
+        controller.Move(Physics.gravity * Time.deltaTime);
         
         posX.Add(transform.localPosition.x.ToString());
         posZ.Add(transform.localPosition.z.ToString());
