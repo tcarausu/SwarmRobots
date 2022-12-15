@@ -23,7 +23,7 @@ Packages needed to run the project can be installed through the following instru
 | --num_iterations | 1000000      | Number of training iterations.                                               |
 | --model_step     | 0            | It indicates the model to resume when testing. It's needed because DQN can easily diverge. thus the best model is not the last one necessarily.                       |
 | --on_unity       |              | Set to on_unity if the code has to run on unity.                             |
-| --resume_model   |              | Resume training.                                                             |
+| --resume_model   |              | Resume model for training.                                                             |
 
 Notice that all built environments have to be placed inside [binary](binary) folder.
 
