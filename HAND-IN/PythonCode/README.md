@@ -20,8 +20,7 @@ Packages needed to run the project can be installed through the following instru
 | --identifier     | FirstRun     | Identifier of the run.                                                       |
 | --config_file    | reportReward | File json containing rewards values.                                         |
 | --num_iterations | 1000000      | Number of training iterations.                                               |
-| --model_step     |              | It indicates the model to select when testing. 
-                                    It's needed because DQN can easily diverge, hence the best model is not the last one necessarily.                       |
+| --model_step     |              | It indicates the model to select when testing. It's needed because DQN can easily diverge, hence the best model is not the last one necessarily.                       |
 | --on_unity       |              | Pass "yes" if the code has to run on unity.                             |
 | --resume_model   |              | Pass "yes" to resume model for training.                                                             |
 
