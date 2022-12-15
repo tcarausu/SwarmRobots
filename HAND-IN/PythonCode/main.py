@@ -1,7 +1,6 @@
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from src import *
 from src.util import *
-
 import json
 import numpy as np
 import os
@@ -32,7 +31,7 @@ def get_env(file_name, no_graphics, training, config):
     if file_name is None:
         print("Start game in Unity..")
     else:
-        print("Connecting to env...", training )
+        print("Connecting to env..." )
     env = UnityEnvironment(file_name=file_name, no_graphics=no_graphics, seed = 42, worker_id=get_worker_id() if file_name != None else 0,  side_channels=[parameter_channel, engine_config_channel]) 
     
     env.reset()
@@ -152,7 +151,9 @@ if __name__ =="__main__":
 
     #---FILES
 
-    folder = os.path.dirname(__file__) #folder envs
+    # folder = os.path.basename(__file__) #folder 
+    folder = os.path.dirname(os.path.abspath(__file__))
+    print(folder)
     env_name = args.env_name #name of the environment and of the model (we need it also when we are testing a model on unity)
     identifier = "//" + args.identifier + "//"   #run identifier
 
@@ -245,7 +246,7 @@ if __name__ =="__main__":
         trainer = TrainerMultiAgent(agent=agent,folder = folder,env_name = env_name, identifier = identifier)
                     
         try:
-            trainer.train(resume_model = False, step=args.model_step, env = env, warmup = warmup)
+            trainer.train(env = env, warmup = warmup)
         finally:
             trainer.log()
             trainer.save_model()

@@ -1,0 +1,34 @@
+
+
+    Mode: train
+
+    Environment name: 4AgentsNoCommTrain
+    Type of action: discrete
+    Number of action: 7
+
+    Run identifier: //TestRun//
+    Warmup: 1000
+    Number of iterations: 2000000
+
+    Number of layers : 2
+    Number of hidden neurons: 256
+
+    Configuration file: reportReward
+
+    "penalties" : 
+        "existenctial" : 0.001,
+        "near_agent" : 0.01,
+        "hit_wall" : 0.01,
+        "hit_agent" :0.003,
+    
+
+    "rewards" : 
+        "checkpoint" : 0.15
+        "near_target" :0.002
+        "target" : 1
+    
+    
+        Not using communication.
+        Number of agents: 4
+        Observation space size: 150
+        
