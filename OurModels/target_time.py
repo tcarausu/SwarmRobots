@@ -22,19 +22,16 @@ if __name__ == "__main__":
     time_values, models = get_time_values(mazes_names,plot)
 
 
-    #plot a line connecting times for each swarm. This graph is a bit messy
-    for i in range(len(models)):
-        plt.plot(time_values[i], label = models[i]) 
+    # #plot a line connecting times for each swarm. This graph is a bit messy
+    # for i in range(len(models)):
+    #     plt.plot(time_values[i], label = models[i]) 
 
-    
-    
-
-    plt.xticks(range(len(x_ticks)), x_ticks , size='xx-small', rotation = 45)
-    plt.xlabel("Target difficulty ->")
-    plt.ylabel("Time to reach target [s]")
-    plt.legend()
-    plt.title("Comparison between agents without communication")
-    # plt.show()
+    # plt.xticks(range(len(x_ticks)), x_ticks , size='xx-small', rotation = 45)
+    # plt.xlabel("Target difficulty ->")
+    # plt.ylabel("Time to reach target [s]")
+    # plt.legend()
+    # plt.title("Comparison between agents without communication")
+    # # plt.show()
 
 
     #---------------------------------------
@@ -45,7 +42,7 @@ if __name__ == "__main__":
     print(df)
 
 
-    print(df[(df>200) & (df<300)].count())
+    # print(df[(df>200) & (df<300)].count())
 
     # We have a max number of steps fixed to 15000, which results in 5 minutes of exploration time.
     # To make data "agnostic" with respect to this value, we can normalize rows (performance of models in each
@@ -56,13 +53,13 @@ if __name__ == "__main__":
     # decides the normalization
 
 
-    df_normalized = df.apply(norm, respect_to_max_time=True, axis = 1) #normalize rows
+    # df_normalized = df.apply(norm, respect_to_max_time=True, axis = 1) #normalize rows
 
     # select only the columns we are interested in. The following selects only models without communication
-    columns = parse_columns(columns=df.columns, to_include = ["NoComm"], to_not_include= [ "Random", "Inside", "Disturbed","Zeroed","Free","Distance"])
-    df_to_plot = df_normalized[columns]
+    columns = parse_columns(columns=df.columns, to_include = ["NoComm", ], to_not_include= [ "Free", "Distance","Random", "Inside", "Disturbed","Zeroed"])
+    df_to_plot = df[columns]
 
-    print(df_to_plot[df_to_plot==1.0].count())
+    print(df_to_plot[df_to_plot==300.0].count())
 
     #create dataframe to easily plot means. One row for each model, one columns containing normalized mean
     mean_df = pd.DataFrame({
@@ -71,11 +68,22 @@ if __name__ == "__main__":
 
     print(mean_df)
 
-    mean_df.plot.bar(y="mean",rot=45, title = "Average Time to Target",legend = False)
+    fig,ax = plt.subplots(1,1)
 
-    plt.xticks(size='xx-small')
-    plt.xlabel("Model")
-    plt.ylabel("Normalized average [s]")
+    mean_df.plot.bar(y="mean",ax = ax,legend = False, rot = 0)
+
+    labels = []
+
+    for i,l in enumerate(ax.get_xticklabels()):
+        if i < 2:
+            labels.append(f"{l.get_text()[0]} {l.get_text()[1:7]}")
+        else:
+            labels.append(f"{l.get_text()[0:2]} {l.get_text()[2:8]}")
+
+    ax.set_xticklabels(labels)
+
+    # plt.xticks(size='xx-small')
+    plt.ylabel("Average time to target [s]")
 
     #---------------------------------------
 
@@ -87,7 +95,7 @@ if __name__ == "__main__":
     # this is going to plot data about columns, so data about each model and distribution of his times
     # columns is the list with the models that will be plotted
 
-    sns.boxplot(data=df_normalized[columns])
+    sns.boxplot(data=df[columns])
     plt.xticks(size='xx-small')
     plt.title("Comparison between agents without communication.")
     plt.xlabel("Model")
